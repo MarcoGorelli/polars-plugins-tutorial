@@ -3,7 +3,7 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "minimal_plugin"
+name = "minimal_plugin"  # Should match the folder with your code!
 requires-python = ">=3.8"
 classifiers = [
   "Programming Language :: Rust",

@@ -17,8 +17,7 @@ pyo3-polars = { version = "0.10.0", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 # If you need any fancy features from the Polars Rust crate, list
 # them in here, e.g.
-# polars = { version = "0.36.2", features = ["dtype-date"], default-features = false }
-polars = { version = "0.36.2", default-features = false }
+polars = { version = "0.36.2", features = ["dtype-date", "dtype-struct"], default-features = false }
 # You may also need other Polars crates, e.g.
 # polars-time = { version = "0.36.2", features = ["timezones"], default-features = false }
 

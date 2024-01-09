@@ -1,12 +1,8 @@
 
 use polars::prelude::*;
-use pyo3_polars::derive::{polars_expr};
 use polars::prelude::arity::binary_elementwise;
 
-#[polars_expr(output_type=Int64)]
-fn add(inputs: &[Series]) -> PolarsResult<Series> {
-    let left = inputs[0].i64()?;
-    let right = inputs[1].i64()?;
+pub(crate) fn impl_add(left: &Int64Chunked, right: &Int64Chunked) -> Int64Chunked {
     let out: Int64Chunked = match right.len() {
         1 => {
             let right = right.get(0).unwrap();
@@ -25,5 +21,5 @@ fn add(inputs: &[Series]) -> PolarsResult<Series> {
             )
         }
     };
-    Ok(out.into_series())
+    out
 }

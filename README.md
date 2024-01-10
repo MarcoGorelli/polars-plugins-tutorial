@@ -29,6 +29,8 @@ All you need is:
 Check `src/expressions.rs` for the most minimal function you can possibly write: `noop`.
 It doesn't do anything, it just returns its input. But it still allows us to go over some things.
 
+### Registering the plugin on the Python side
+
 In `__init__.py`, we registered it as:
 ```python
 def noop(self) -> pl.Expr:
@@ -49,7 +51,7 @@ The first two arguments aren't too surprising:
   to the correctness of your results, though setting `is_elementwise=True` will be more performant.
   See the `cum_sum` section below for an example of where `is_elementwise` actually makes a difference.
 
-Let's look at the function definition:
+Right, let's go over the Rust definition now:
 ```Rust
 #[polars_expr(output_type_func=same_output_type)]
 fn noop(inputs: &[Series]) -> PolarsResult<Series> {
@@ -58,9 +60,7 @@ fn noop(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-There's a few components we need to understand.
-
-### output_type_func
+### Rust function: defining schema with `output_type_func`
 
 If you only ever intend to use your plugin in eager mode, then you might not care about this one.
 On the other hand, if you envision wanting to use it in lazy mode, then this will ensure that
@@ -76,3 +76,23 @@ fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     Ok(field.clone())
 }
 ```
+
+### Rust function: function body
+
+The function body is just:
+```Rust
+let s = &inputs[0];
+Ok(s.clone())
+```
+
+Plugins can accept multiple columns as inputs. In this simple case, we just accept a single one,
+so we index into `inputs` with `[0]`.
+Because `inputs` is a reference to an iterable of `Series`, we need to use `.clone` so that we can
+return an owned value.
+
+## Accepting multiple expressions as inputs
+
+In the above example, we just transformed a column by itself. Let's now look at an example
+in which we also take a second column as input, and sum it to the first one.
+This won't be as complete as the Polars implementation of `Expr.sum`, as we'll assume both
+columns are of `Int64` dtype - but we'll see how to deal with multiple dtypes later.

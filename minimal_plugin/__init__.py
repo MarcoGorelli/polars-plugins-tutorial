@@ -24,3 +24,10 @@ class MinimalExamples:
             is_elementwise=True,
             args=[other]
         )
+
+    def cum_sum(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="cum_sum",
+            is_elementwise=False,
+        )

@@ -1,0 +1,13 @@
+site_name: How you (yes, you!) can write a Polars Plugin
+
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - prerequisites.md
+  - noop.md
+  - add_i64.md
+  - add_nums.md
+  - cum_sum.md
+  - geocode.md

@@ -96,3 +96,53 @@ In the above example, we just transformed a column by itself. Let's now look at 
 in which we also take a second column as input, and sum it to the first one.
 This won't be as complete as the Polars implementation of `Expr.sum`, as we'll assume both
 columns are of `Int64` dtype - but we'll see how to deal with multiple dtypes later.
+
+### Python side
+
+To accept a second column as input, we'll need to make the following changes:
+- in the `__init__.py` file, when defining the Python function, pass the extra arguments
+  to `args`. So, instead of
+  ```python
+  def add(self) -> pl.Expr:
+    return self._expr.register_plugin(
+        lib=lib,
+        symbol="noop",
+        is_elementwise=True,
+    )
+  ```
+  we'll write
+  ```python
+  def add(self, other: IntoExpr) -> pl.Expr:
+    return self._expr.register_plugin(
+        lib=lib,
+        symbol="noop",
+        is_elementwise=True,
+        args=[other]
+    )
+  ```
+
+### Rust side
+
+Rather than implementing everything in `expressions.rs`, let's only register the expression
+there:
+```Rust
+#[polars_expr(output_type=Int64)]
+fn add(inputs: &[Series]) -> PolarsResult<Series> {
+    let left = inputs[0].i64()?;
+    let right = inputs[1].i64()?;
+    Ok(impl_add(left, right).into_series())
+}
+```
+, and we'll define `impl_add` in a different file `add.rs`. `impl_add` is going to get
+more and more complex as we go on, but we'll start with the simplest case here.
+
+Let's start with how to sum two columns of the same length, which are both of dtype `Int64`.
+
+```Rust
+pub(crate) fn impl_add(left: &Int64Chunked, right: &Int64Chunked) -> Int64Chunked {
+    binary_elementwise(left, right, |left, right| match (left, right) {
+        (Some(left), Some(right)) => Some(left + right),
+        _ => None,
+    })
+}
+```

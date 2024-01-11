@@ -129,3 +129,30 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
     }
 }
 ```
+
+Let's try this out:
+```python
+import polars as pl
+import minimal_plugin  # noqa: F401
+
+df = pl.DataFrame({
+    'a': [1, -1, None],
+    'b': [4.1, 5.2, -6.3],
+    'c': ['hello', 'everybody!', '!']
+})
+print(df.with_columns(pl.col('a', 'b').mp.abs_numeric().name.suffix('_abs')))
+```
+If this outputs
+```
+shape: (3, 5)
+┌──────┬──────┬────────────┬───────┬───────┐
+│ a    ┆ b    ┆ c          ┆ a_abs ┆ b_abs │
+│ ---  ┆ ---  ┆ ---        ┆ ---   ┆ ---   │
+│ i64  ┆ f64  ┆ str        ┆ i64   ┆ f64   │
+╞══════╪══════╪════════════╪═══════╪═══════╡
+│ 1    ┆ 4.1  ┆ hello      ┆ 1     ┆ 4.1   │
+│ -1   ┆ 5.2  ┆ everybody! ┆ 1     ┆ 5.2   │
+│ null ┆ -6.3 ┆ !          ┆ null  ┆ 6.3   │
+└──────┴──────┴────────────┴───────┴───────┘
+```
+then you did everything correctly!

@@ -2,9 +2,7 @@ site_name: How you (yes, you!) can write a Polars Plugin
 
 theme:
   name: material
-  font:
-    text: Roboto
-    code: Roboto Mono
+  font: false
   features:
     - content.code.copy
     - content.code.annotate

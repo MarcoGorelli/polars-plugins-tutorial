@@ -53,6 +53,9 @@ The idea is:
 - for each row, if both `left` and `right` are valid, then we some them;
 - if either of them is missing (`None`), then we return `None`.
 
+Can you write a Python script which uses this new `.mp.sum_i64` function
+you just wrote?
+
 ## Get over your exercises
 
 It's widely acknowledged that the best way to learn is by doing.

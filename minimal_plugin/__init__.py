@@ -24,6 +24,13 @@ class MinimalExamples:
             is_elementwise=True,
         )
 
+    def abs_numeric(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="abs_numeric",
+            is_elementwise=True,
+        )
+
     def add(self, other: IntoExpr) -> pl.Expr:
         return self._expr.register_plugin(
             lib=lib,

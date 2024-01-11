@@ -8,9 +8,9 @@ everything up!
 
 Here are the files we'll need to create:
 
-- `Cargo.toml`: file with Rust dependencies
-- `pyproject.toml`: file with Python build info
-- `requirements.txt`: Python build dependencies
+- `Cargo.toml`: file with Rust dependencies.
+- `pyproject.toml`: file with Python build info.
+- `requirements.txt`: Python build dependencies.
 
 Start by copying the `Cargo.toml` and `pyproject.toml`
 files from this repository - they contain the
@@ -20,6 +20,15 @@ We'll also need to create the following directories:
 
 - `minimal_plugin`: your Python package
 - `src`: directory with your blazingly fast (of course) Rust code.
+
+Your working directory should contain at least the following:
+```
+.
+├── Cargo.toml
+├── minimal_plugin
+├── pyproject.toml
+└── src
+```
 
 ## The Python side
 

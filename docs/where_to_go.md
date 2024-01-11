@@ -8,7 +8,7 @@ Or at least, the first 10 chapters.
 
 If this was easy for you, you may want to look into:
 
-- other data types (you may need to active extra features in the `Cargo.toml` file
+- other data types (you may need to activate extra features in the `Cargo.toml` file
   e.g. `dtype-dates`)
 - "vertical" operations (note: you'll almost certainly want to set `elementwise=False`)
 - tapping into existing Rust crates.

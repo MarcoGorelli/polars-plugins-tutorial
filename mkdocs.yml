@@ -7,7 +7,5 @@ nav:
   - Home: index.md
   - prerequisites.md
   - noop.md
-  - add_i64.md
-  - add_nums.md
-  - cum_sum.md
-  - geocode.md
+  - abs.md
+  - sum.md

@@ -1,11 +1,9 @@
 import polars as pl
-import minimal_plugin
-from datetime import date, datetime, timedelta
+import minimal_plugin  # noqa: F401
 
 df = pl.DataFrame({
-    'a': [1, 1, None],
-    'b': [4, 5, 6],
-    'c': [True, True, False],
-    'd': ['foo', 'bar', 'ham'],
+    'a': [1, -1, None],
+    'b': [4.1, 5.2, -6.3],
+    'c': ['hello', 'everybody!', '!']
 })
-print(df.with_columns(summed=pl.col('a').minimal_plugin.add('b')))
+print(df.with_columns(pl.col(pl.Int64).mp.abs_i64().name.suffix('_abs')))

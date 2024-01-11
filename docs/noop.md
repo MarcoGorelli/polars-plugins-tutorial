@@ -171,7 +171,32 @@ df = pl.DataFrame({
     'b': [4.1, 5.2, 6.3],
     'c': ['hello', 'everybody!', '!']
 })
-print(df.with_columns(pl.all().noop().suffix('_noop')))
+print(df.with_columns(pl.all().mp.noop().name.suffix('_noop')))
 ```
 
-But we 
+Note that you can't run this file just yet - we need to compile
+our code first! Please run
+```
+maturin develop
+```
+You'll need to do this everytime you change any of your Rust code.
+It may take a while the first time, but subsequent executions will
+be significantly faster as the build process is incremental.
+
+Finally, you can run your code! If you run `python run.py` and get
+the following output:
+```
+shape: (3, 6)
+┌──────┬─────┬────────────┬────────┬────────┬────────────┐
+│ a    ┆ b   ┆ c          ┆ a_noop ┆ b_noop ┆ c_noop     │
+│ ---  ┆ --- ┆ ---        ┆ ---    ┆ ---    ┆ ---        │
+│ i64  ┆ f64 ┆ str        ┆ i64    ┆ f64    ┆ str        │
+╞══════╪═════╪════════════╪════════╪════════╪════════════╡
+│ 1    ┆ 4.1 ┆ hello      ┆ 1      ┆ 4.1    ┆ hello      │
+│ 1    ┆ 5.2 ┆ everybody! ┆ 1      ┆ 5.2    ┆ everybody! │
+│ null ┆ 6.3 ┆ !          ┆ null   ┆ 6.3    ┆ !          │
+└──────┴─────┴────────────┴────────┴────────┴────────────┘
+```
+then it means everything worked correctly. Congrats!
+
+You're now ready to learn how to do ABSolutely nothing.

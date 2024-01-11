@@ -43,7 +43,7 @@ where
     ChunkedArray::<T>::from_chunk_iter(ca.name(), chunks)
 }
 
-#[polars_expr(output_type=Int64)]
+#[polars_expr(output_type_func=same_output_type)]
 fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     match s.dtype() {
@@ -56,7 +56,7 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 }
 
 #[polars_expr(output_type=Int64)]
-fn add(inputs: &[Series]) -> PolarsResult<Series> {
+fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let left = inputs[0].i64()?;
     let right = inputs[1].i64()?;
     Ok(impl_add(left, right).into_series())

@@ -92,7 +92,7 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 ```
 
 Next, we need to make `impl_abs_numeric` generic over
-numeric types. We can do that using ? - read
+numeric types. We can do that using generics - read
 [here](https://doc.rust-lang.org/book/ch10-00-generics.html) for more info.
 ```Rust
 fn impl_abs_numeric<T>(ca: &ChunkedArray<T>) -> ChunkedArray<T>

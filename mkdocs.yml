@@ -13,6 +13,7 @@ nav:
   - noop.md
   - abs.md
   - sum.md
+  - where_to_go.md
 
 plugins:
 - search

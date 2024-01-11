@@ -1,6 +1,6 @@
 # How you (yes, you!) can write a Polars Plugin
 
-![](https://github.com/MarcoGorelli/polars-plugins-tutorial/assets/33491632/1915fa07-1049-4e22-b56d-a014a00d1939)
+![](assets/image.png)
 
 Polars Plugins can give you superpowers.
 

@@ -16,7 +16,6 @@ nav:
 
 plugins:
 - search
-- mkdocstrings
 
 # Extensions
 markdown_extensions:

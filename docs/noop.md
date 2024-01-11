@@ -1,4 +1,4 @@
-# 1. `noop`: how to do nothing
+# 1. How to do nothing
 
 That's right - this section is about how to do _nothing_.
 
@@ -27,7 +27,8 @@ Let's start by getting the Python side ready. It won't run until we
 implement the Rust side too, but it's a necessary step.
 Start by making a `minimal_plugin/__init__.py` file with the
 following content:
-```python
+
+``` py
 import polars as pl
 from polars.utils.udfs import _get_shared_lib_location
 from polars.type_aliases import IntoExpr
@@ -84,38 +85,39 @@ We'll need to make two files:
 
 - `lib.rs`: list any Rust modules we want to use. We'll
   put `expressions` here (which we define in the next bullet point).
-
-  ```Rust
-  mod expressions;
   
-  #[cfg(target_os = "linux")]
-  use jemallocator::Jemalloc;
-  
-  #[global_allocator]
-  #[cfg(target_os = "linux")]
-  static ALLOC: Jemalloc = Jemalloc; 
-  ```
+```Rust
+mod expressions;
 
-  You can ignore the `jemallocator` part - think of it as some
-  boilerplate in order to get high-performance memory allocation.
-  Your plugin would work just fine without it.
+#[cfg(target_os = "linux")]
+use jemallocator::Jemalloc;
+
+#[global_allocator]
+#[cfg(target_os = "linux")]
+static ALLOC: Jemalloc = Jemalloc; 
+```
+  
+You can ignore the `jemallocator` part - think of it as some
+boilerplate in order to get high-performance memory allocation.
+Your plugin would work just fine without it.
+
 - `expressions.rs`: this is where we'll define `noop`
-  ```Rust
-  #![allow(clippy::unused_unit)]
-  use polars::prelude::*;
-  use pyo3_polars::derive::polars_expr;
-  
-  fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
-      let field = &input_fields[0];
-      Ok(field.clone())
-  }
-  
-  #[polars_expr(output_type_func=same_output_type)]
-  fn noop(inputs: &[Series]) -> PolarsResult<Series> {
-      let s = &inputs[0];
-      Ok(s.clone())
-  } 
-  ```
+``` rust
+#![allow(clippy::unused_unit)]
+use polars::prelude::*;
+use pyo3_polars::derive::polars_expr;
+
+fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = &input_fields[0];
+    Ok(field.clone())
+}
+
+#[polars_expr(output_type_func=same_output_type)]
+fn noop(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    Ok(s.clone())
+} 
+```
 
 That last file looks a bit complex, so let's make sense of it.
 

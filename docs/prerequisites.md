@@ -2,7 +2,7 @@
 
 First, you should probably make new directory for this project.
 Either clone https://github.com/MarcoGorelli/polars-plugins-tutorial,
-or make a new repository.
+or make a new directory.
 
 Next, you'll need a Python3.8+ virtual environment with:
 

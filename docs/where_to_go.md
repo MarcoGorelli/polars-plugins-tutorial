@@ -11,4 +11,6 @@ If this was easy for you, you may want to look into:
 - other data types (you may need to activate extra features in the `Cargo.toml` file
   e.g. `dtype-dates`)
 - "vertical" operations (note: you'll almost certainly want to set `elementwise=False`)
-- tapping into existing Rust crates.
+- leveraging existing Rust crates.
+
+This tutorial is work-in-progress, and more topics will make their way in.

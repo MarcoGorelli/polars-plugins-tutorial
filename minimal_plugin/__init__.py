@@ -31,10 +31,10 @@ class MinimalExamples:
             is_elementwise=True,
         )
 
-    def add(self, other: IntoExpr) -> pl.Expr:
+    def sum_i64(self, other: IntoExpr) -> pl.Expr:
         return self._expr.register_plugin(
             lib=lib,
-            symbol="add",
+            symbol="sum_i64",
             is_elementwise=True,
             args=[other]
         )

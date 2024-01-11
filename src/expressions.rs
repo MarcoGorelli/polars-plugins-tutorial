@@ -1,10 +1,8 @@
 #![allow(clippy::unused_unit)]
-use crate::add::impl_add;
-use crate::cum_sum::impl_cum_sum;
+use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
-use pyo3_polars::export::polars_core::utils::CustomIterTools;
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -51,7 +49,9 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
         DataType::Int64 => Ok(impl_abs_numeric(s.i64().unwrap()).into_series()),
         DataType::Float32 => Ok(impl_abs_numeric(s.f32().unwrap()).into_series()),
         DataType::Float64 => Ok(impl_abs_numeric(s.f64().unwrap()).into_series()),
-        dtype => polars_bail!(InvalidOperation:format!("dtype {dtype} not supported for abs_numeric, expected Int32, Int64, Float32, Float64.")),
+        dtype => {
+            polars_bail!(InvalidOperation:format!("dtype {dtype} not supported for abs_numeric, expected Int32, Int64, Float32, Float64."))
+        }
     }
 }
 
@@ -59,5 +59,9 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let left = inputs[0].i64()?;
     let right = inputs[1].i64()?;
-    Ok(impl_add(left, right).into_series())
+    let out: Int64Chunked = binary_elementwise(left, right, |left, right| match (left, right) {
+        (Some(left), Some(right)) => Some(left + right),
+        _ => None,
+    });
+    Ok(out.into_series())
 }

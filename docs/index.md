@@ -1,5 +1,7 @@
 # How you (yes, you!) can write a Polars Plugin
 
+Polars Plugins can give you superpowers.
+
 Even with just basic Rust skills, you can leverage the power of Polars Plugins
 to solve virtually any problem you may have in a high-performance manner.
 

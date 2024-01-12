@@ -1,4 +1,4 @@
-site_name: How you (yes, you!) can write a Polars Plugin
+site_name: Polars plugins tutorial
 repo_url: https://github.com/MarcoGorelli/polars-plugins-tutorial
 
 theme:

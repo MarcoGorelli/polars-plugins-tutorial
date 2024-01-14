@@ -25,9 +25,9 @@ Next, let's define `abs_i64` on the Rust side. The general idea will
 be:
 
 - A Series is backed by a ChunkedArray. Each chunk is an Arrow Array
-  which is continuous in memory. So we're going to start by iterating
-  over chunks.
-- For each chunk, we iterate over the elements in that array.
+  which is contiguous in memory. So we're going to start by iterating
+  over chunks by calling `downcast_iter`.
+- For each chunk, we iterate over the elements in that array (`into_iter`)
 - Each element can either be `Some(i64)`, or `None`. If it's `None`,
   we return `None`, whereas if it's `Some(i64)`, then we take its
   absolute value.
@@ -50,7 +50,34 @@ fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-NOTE: there are faster ways of implementing this particular operation. If you
+Let's try this out. Make a Python file `run.py` with the following:
+```python
+import polars as pl
+import minimal_plugin  # noqa: F401
+
+df = pl.DataFrame({
+    'a': [1, -1, None],
+    'b': [4.1, 5.2, -6.3],
+    'c': ['hello', 'everybody!', '!']
+})
+print(df.with_columns(pl.col('a').mp.abs_i64().name.suffix('_abs')))
+```
+If this outputs
+```
+shape: (3, 4)
+┌──────┬──────┬────────────┬───────┐
+│ a    ┆ b    ┆ c          ┆ a_abs │
+│ ---  ┆ ---  ┆ ---        ┆ ---   │
+│ i64  ┆ f64  ┆ str        ┆ i64   │
+╞══════╪══════╪════════════╪═══════╡
+│ 1    ┆ 4.1  ┆ hello      ┆ 1     │
+│ -1   ┆ 5.2  ┆ everybody! ┆ 1     │
+│ null ┆ -6.3 ┆ !          ┆ null  │
+└──────┴──────┴────────────┴───────┘
+```
+then you did everything correctly!
+
+> NOTE: there are faster ways of implementing this particular operation. If you
 look at the Polars source code, you'll see that it's a bit different there.
 The purpose of this exercise is to show you an implementation which is
 explicit and generalisable enough that you can customise it according to your
@@ -130,29 +157,7 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-Let's try this out:
+Now, if you return to `run.py`, you should be able to run
 ```python
-import polars as pl
-import minimal_plugin  # noqa: F401
-
-df = pl.DataFrame({
-    'a': [1, -1, None],
-    'b': [4.1, 5.2, -6.3],
-    'c': ['hello', 'everybody!', '!']
-})
 print(df.with_columns(pl.col('a', 'b').mp.abs_numeric().name.suffix('_abs')))
 ```
-If this outputs
-```
-shape: (3, 5)
-┌──────┬──────┬────────────┬───────┬───────┐
-│ a    ┆ b    ┆ c          ┆ a_abs ┆ b_abs │
-│ ---  ┆ ---  ┆ ---        ┆ ---   ┆ ---   │
-│ i64  ┆ f64  ┆ str        ┆ i64   ┆ f64   │
-╞══════╪══════╪════════════╪═══════╪═══════╡
-│ 1    ┆ 4.1  ┆ hello      ┆ 1     ┆ 4.1   │
-│ -1   ┆ 5.2  ┆ everybody! ┆ 1     ┆ 5.2   │
-│ null ┆ -6.3 ┆ !          ┆ null  ┆ 6.3   │
-└──────┴──────┴────────────┴───────┴───────┘
-```
-then you did everything correctly!

@@ -10,7 +10,6 @@ Here are the files we'll need to create:
 
 - `Cargo.toml`: file with Rust dependencies.
 - `pyproject.toml`: file with Python build info.
-- `requirements.txt`: Python build dependencies.
 
 Start by copying the `Cargo.toml` and `pyproject.toml`
 files from this repository - they contain the

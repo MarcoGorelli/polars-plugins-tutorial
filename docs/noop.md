@@ -70,20 +70,20 @@ Let's go through this line-by-line:
   function: `noop`, using the `register_plugin` function.
   We'll need to pass the following arguments:
   
-  - `lib`: location of Shared Object file.
-  - `symbol`: name of the Rust function we wish to call. We
-    haven't written any Rust yet, but let's put `noop` here
-    for now, and we'll implement the `noop` function in Rust
-    later.
-  - `is_elementwise`: this affects how our function works in
-    a group-by context. If your function operates independently
-    for each row, then set this to `True`. Else, if your function
-    needs to consider the whole column, set this to `False`.
-    Incorrectly setting this to `True` could result in wrong results
-    in a group-by operation! In our case, `noop` will look at each
-    row and just return its value as-is, without considering the
-    values of other rows in the column. Therefore, we set
-    `is_elementwise=True`.
+    * `lib`: location of Shared Object file.
+    * `symbol`: name of the Rust function we wish to call. We
+      haven't written any Rust yet, but let's put `noop` here
+      for now, and we'll implement the `noop` function in Rust
+      later.
+    * `is_elementwise`: this affects how our function works in
+      a group-by context. If your function operates independently
+      for each row, then set this to `True`. Else, if your function
+      needs to consider the whole column, set this to `False`.
+      Incorrectly setting this to `True` could result in wrong results
+      in a group-by operation! In our case, `noop` will look at each
+      row and just return its value as-is, without considering the
+      values of other rows in the column. Therefore, we set
+      `is_elementwise=True`.
 
 That's it!
 

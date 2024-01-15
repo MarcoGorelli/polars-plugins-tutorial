@@ -150,3 +150,8 @@ Now, we get:
 
 Only `elementwise=False` actually respected the window! This is why
 it's important to set `elementwise` correctly.
+
+## For the keen bees
+
+Fancy rewriting `cum_sum` so it's generic over numeric types, instead of
+only supporting `Int64`?

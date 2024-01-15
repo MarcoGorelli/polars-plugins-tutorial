@@ -15,6 +15,7 @@ nav:
   - abs.md
   - sum.md
   - cum_sum.md
+  - stringify.md
   - where_to_go.md
 
 plugins:

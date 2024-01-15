@@ -3,6 +3,8 @@ use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
+use pyo3_polars::export::polars_core::utils::arrow::array::MutableUtf8Array;
+use pyo3_polars::export::polars_core::utils::arrow::compute::arithmetics::basic::mul;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
@@ -89,5 +91,39 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect_trusted();
     let out = out.with_name(ca.name());
+    Ok(out.into_series())
+}
+
+use std::fmt::Write;
+
+#[polars_expr(output_type=String)]
+fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.str()?;
+    let chunks = ca.downcast_iter().map(|arr| {
+        arr.into_iter()
+            .map(|opt_v| {
+                opt_v.map(|value| {
+                    if let Some(first_char) = value.chars().next() {
+                        format!("{}{}ay", &value[1..], first_char)
+                    } else {
+                        value.to_string()
+                    }
+                })
+            })
+            .collect()
+    });
+    let out = StringChunked::from_chunk_iter(ca.name(), chunks);
+    Ok(out.into_series())
+}
+
+#[polars_expr(output_type=String)]
+fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
+    let ca = inputs[0].str()?;
+    let out: StringChunked = ca.apply_to_buffer(|value, output|
+        if let Some(first_char) = value.chars().next() {
+            write!(output, "{}{}ay", &value[1..], first_char).unwrap()
+        }
+    );
     Ok(out.into_series())
 }

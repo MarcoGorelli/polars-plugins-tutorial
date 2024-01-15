@@ -1,4 +1,4 @@
-# 4. Elementwise, my dear Watson - or not?
+# 4. How to not FOLD under pressure
 
 The operations we've seen so far have all been elementwise, e.g.:
 
@@ -77,7 +77,7 @@ Note how we use `collect_trusted` at the end, rather than `collect`.
 (and we do in this case, `cum_sum` doesn't change the column's length)
 then we can safely use `collect_trusted`.
 
-## Did we really need `elementwise=False`?
+## Elementwise, my dear Watson
 
 If you try running
 ```python

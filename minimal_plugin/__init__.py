@@ -45,3 +45,17 @@ class MinimalExamples:
             symbol="cum_sum",
             is_elementwise=False,
         )
+
+    def pig_latinnify_1(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="pig_latinnify_1",
+            is_elementwise=True,
+        )
+
+    def pig_latinnify_2(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="pig_latinnify_2",
+            is_elementwise=True,
+        )

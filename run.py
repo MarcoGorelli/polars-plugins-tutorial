@@ -1,12 +1,10 @@
 import polars as pl
 import minimal_plugin  # noqa: F401
+import numpy as np
 
-import polars as pl
-import minimal_plugin  # noqa: F401
-
+n = 100
 df = pl.DataFrame({
-    'a': [1, -1, None],
-    'b': [4.1, 5.2, -6.3],
-    'c': ['hello', 'everybody!', '!']
+    'a': [1, 2, 3, 4, None, 5],
+    'b': [1, 1, 1, 2, 2, 2],
 })
-print(df.with_columns(pl.col('a').mp.abs_numeric().name.suffix('_abs')))
+print(df.with_columns(a_cum_sum=pl.col('a').mp.cum_sum().over('b')))

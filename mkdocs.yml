@@ -14,6 +14,7 @@ nav:
   - noop.md
   - abs.md
   - sum.md
+  - cum_sum.md
   - where_to_go.md
 
 plugins:

@@ -3,6 +3,7 @@ use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
+use pyo3_polars::export::polars_core::utils::CustomIterTools;
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -63,5 +64,30 @@ fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
         (Some(left), Some(right)) => Some(left + right),
         _ => None,
     });
+    Ok(out.into_series())
+}
+
+#[polars_expr(output_type_func=same_output_type)]
+fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.i64()?;
+    let out: Int64Chunked = ca
+        .into_iter()
+        .scan(None, |state: &mut Option<i64>, x: Option<i64>| {
+            let sum = match (*state, x) {
+                (Some(state_inner), Some(x)) => {
+                    *state = Some(state_inner + x);
+                    *state
+                }
+                (None, Some(x)) => {
+                    *state = Some(x);
+                    *state
+                }
+                (_, None) => None,
+            };
+            Some(sum)
+        })
+        .collect_trusted();
+    let out = out.with_name(ca.name());
     Ok(out.into_series())
 }

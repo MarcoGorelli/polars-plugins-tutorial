@@ -26,7 +26,7 @@ def sum_i64(self, other: IntoExpr) -> pl.Expr:
     )
 ```
 
-## Elementwise, my dear Watson
+## I’ve got 1100011 problems but binary ain't one
 
 Polars gives us a handy `binary_elementwise` function for computing elementwise operations
 involving multiple columns. Here's how we can implement `sum_i64`:

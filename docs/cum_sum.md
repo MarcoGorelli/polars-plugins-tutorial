@@ -1,4 +1,4 @@
-# Not-so-elementwise, my dear Watson
+# 4. Elementwise, my dear Watson - or not?
 
 The operations we've seen so far have all been elementwise, e.g.:
 
@@ -9,15 +9,14 @@ Let's do something (completely) different - instead of working with
 each row in isolation, we'll calculate something which depends on the
 rows which precede it.
 
-Let's try implementing `cum_sum`.
+We're gonna implement `cum_sum`.
 
 ## Python side
 
 Before you copy-and-paste `def add_numeric` and just change the function
 name - wait a sec. Yes, you can do that, but there's one more detail
-you need to take care of: `elementwise`. We'll set it to `False` here.
-We'll see at the end of this chapter what happens if you incorrectly set it
-to `True`.
+you need to take care of: `elementwise`. We'll set it to `False` here,
+and you'll see why that's important at the end of this chapter.
 
 Add this to `minimal_plugin/__init__.py`:
 ```python
@@ -74,10 +73,9 @@ The general idea is:
   and emit `None`.
 
 Note how we use `collect_trusted` at the end, rather than `collect`.
-`collect` would work as well, but if we know the length of the output,
-then `collect_trusted` is faster. In the case of `cum_sum`, the length
-of the input doesn't change, so we can safely use `collect_trusted` and
-save some precious time.
+`collect` would work as well, but if we know the length of the output
+(and we do in this case, `cum_sum` doesn't change the column's length)
+then we can safely use `collect_trusted`.
 
 ## Did we really need `elementwise=False`?
 
@@ -116,39 +114,39 @@ Now, we get:
 
 - `elementwise=True`:
 
-```
-shape: (6, 3)
-┌──────┬─────┬───────────┐
-│ a    ┆ b   ┆ a_cum_sum │
-│ ---  ┆ --- ┆ ---       │
-│ i64  ┆ i64 ┆ i64       │
-╞══════╪═════╪═══════════╡
-│ 1    ┆ 1   ┆ 1         │
-│ 2    ┆ 1   ┆ 3         │
-│ 3    ┆ 1   ┆ 6         │
-│ 4    ┆ 2   ┆ 10        │
-│ null ┆ 2   ┆ null      │
-│ 5    ┆ 2   ┆ 15        │
-└──────┴─────┴───────────┘
-```
+    ```
+    shape: (6, 3)
+    ┌──────┬─────┬───────────┐
+    │ a    ┆ b   ┆ a_cum_sum │
+    │ ---  ┆ --- ┆ ---       │
+    │ i64  ┆ i64 ┆ i64       │
+    ╞══════╪═════╪═══════════╡
+    │ 1    ┆ 1   ┆ 1         │
+    │ 2    ┆ 1   ┆ 3         │
+    │ 3    ┆ 1   ┆ 6         │
+    │ 4    ┆ 2   ┆ 10        │
+    │ null ┆ 2   ┆ null      │
+    │ 5    ┆ 2   ┆ 15        │
+    └──────┴─────┴───────────┘
+    ```
 
 - `elementwise=False`:
 
-```
-shape: (6, 3)
-┌──────┬─────┬───────────┐
-│ a    ┆ b   ┆ a_cum_sum │
-│ ---  ┆ --- ┆ ---       │
-│ i64  ┆ i64 ┆ i64       │
-╞══════╪═════╪═══════════╡
-│ 1    ┆ 1   ┆ 1         │
-│ 2    ┆ 1   ┆ 3         │
-│ 3    ┆ 1   ┆ 6         │
-│ 4    ┆ 2   ┆ 4         │
-│ null ┆ 2   ┆ null      │
-│ 5    ┆ 2   ┆ 9         │
-└──────┴─────┴───────────┘
-```
+    ```
+    shape: (6, 3)
+    ┌──────┬─────┬───────────┐
+    │ a    ┆ b   ┆ a_cum_sum │
+    │ ---  ┆ --- ┆ ---       │
+    │ i64  ┆ i64 ┆ i64       │
+    ╞══════╪═════╪═══════════╡
+    │ 1    ┆ 1   ┆ 1         │
+    │ 2    ┆ 1   ┆ 3         │
+    │ 3    ┆ 1   ┆ 6         │
+    │ 4    ┆ 2   ┆ 4         │
+    │ null ┆ 2   ┆ null      │
+    │ 5    ┆ 2   ┆ 9         │
+    └──────┴─────┴───────────┘
+    ```
 
 Only `elementwise=False` actually respected the window! This is why
 it's important to set `elementwise` correctly.

@@ -11,29 +11,19 @@ We'll do this in phases:
 ## `abs_i64`
 
 Let's start with the Python side - this is almost the same as what
-we did for `noop`, we'll just change the names:
+we did for `noop`, we'll just change the names. Please add this to
+`minimal_plugin/__init__.py`, right below the definition of `noop`:
 ```python
-def abs_i64(self) -> pl.Expr:
-    return self._expr.register_plugin(
-        lib=lib,
-        symbol="abs_i64",
-        is_elementwise=True,
-    )
+    def abs_i64(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="abs_i64",
+            is_elementwise=True,
+        )
 ```
 
-Next, let's define `abs_i64` on the Rust side. The general idea will
-be:
-
-- A Series is backed by a ChunkedArray. Each chunk is an Arrow Array
-  which is contiguous in memory. So we're going to start by iterating
-  over chunks by calling `downcast_iter`.
-- For each chunk, we iterate over the elements in that array (`into_iter`)
-- Each element can either be `Some(i64)`, or `None`. If it's `None`,
-  we return `None`, whereas if it's `Some(i64)`, then we take its
-  absolute value.
-- We produce a new ChunkedArray, convert it to Series, and return it.
-
-In code:
+Then, please add this to `src/expressions.rs`, right below the Rust
+definition of `noop`:
 
 ```Rust
 #[polars_expr(output_type=Int64)]
@@ -50,6 +40,18 @@ fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
+The general idea here is:
+
+- A Series is backed by a ChunkedArray. Each chunk is an Arrow Array
+  , in which data is stored contiguously in memory.
+  So we're going to start by iterating over chunks by calling
+  `downcast_iter`.
+- For each chunk, we iterate over the elements in that array (`into_iter`)
+- Each element can either be `Some(i64)`, or `None`. If it's `None`,
+  we return `None`, whereas if it's `Some(i64)`, then we take its
+  absolute value.
+- We produce a new ChunkedArray, convert it to Series, and return it.
+
 Let's try this out. Make a Python file `run.py` with the following:
 ```python
 import polars as pl
@@ -62,7 +64,8 @@ df = pl.DataFrame({
 })
 print(df.with_columns(pl.col('a').mp.abs_i64().name.suffix('_abs')))
 ```
-If this outputs
+Compile it with `maturin develop` (or `maturin develop --release` if you're benchmarking), and run it with `python run.py`.
+If it outputs
 ```
 shape: (3, 4)
 ┌──────┬──────┬────────────┬───────┐
@@ -77,27 +80,29 @@ shape: (3, 4)
 ```
 then you did everything correctly!
 
-> NOTE: there are faster ways of implementing this particular operation. If you
-look at the Polars source code, you'll see that it's a bit different there.
-The purpose of this exercise is to show you an implementation which is
-explicit and generalisable enough that you can customise it according to your
-needs, whilst probably being performant enough for most cases.
-This is already orders of magnitude faster than `.map_elements`...
+!!! note
+
+    There's a faster way of implementing this particular operation,
+    which we'll cover later in the tutorial in section 7.
 
 ## `abs_numeric`
 
 The code above unfortunately only supports `Int64` columns. Let's try to
 generalise it a bit, so that it can accept any numeric column.
 
-First, add a `abs_numeric` function to your `minimal_plugin/__init__.py` file.
-It should be just like `abs_i64` but with
-a different name.
+First, add the following definition to `minimal_plugin/__init__.py`:
 
-Then, let's go back to `src/expressions.rs` and try to implement it.
+```python
+    def abs_numeric(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="abs_numeric",
+            is_elementwise=True,
+        )
+```
 
-Let's start off by just copy-and-pasting
-`abs_i64`, but we'll factor part of it out
-into a helper function:
+Then, we'll go back to `src/expressions.rs`.
+Paste in the following:
 
 ```Rust
 fn impl_abs_numeric(ca: &Int64Chunked) -> Int64Chunked {
@@ -118,9 +123,13 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-Next, we need to make `impl_abs_numeric` generic over
-numeric types. We can do that using generics - read
-[here](https://doc.rust-lang.org/book/ch10-00-generics.html) for more info.
+Note how it's exactly like `abs_i64`, but `impl_abs_numeric` was
+factored out of the `abs_numeric` function. It's not yet generic,
+we need to do a bit more work.
+You can read about generics
+[here](https://doc.rust-lang.org/book/ch10-00-generics.html) if you're
+not familiar with them.
+Change `impl_abs_numeric` to:
 ```Rust
 fn impl_abs_numeric<T>(ca: &ChunkedArray<T>) -> ChunkedArray<T>
 where
@@ -141,10 +150,9 @@ use pyo3_polars::export::polars_core::export::num::Signed;
 ```
 to the top of the `src/expression.rs` file.
 
-Finally, we can accept more than just `i64` - any (signed)
-numeric type will do!
-
+We then need to modify `abs_numeric` as follows:
 ```Rust
+#[polars_expr(output_type_func=same_output_type)]
 fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     match s.dtype() {
@@ -152,12 +160,35 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
         DataType::Int64 => Ok(impl_abs_numeric(s.i64().unwrap()).into_series()),
         DataType::Float32 => Ok(impl_abs_numeric(s.f32().unwrap()).into_series()),
         DataType::Float64 => Ok(impl_abs_numeric(s.f64().unwrap()).into_series()),
-        dtype => polars_bail!(InvalidOperation:format!("dtype {dtype} not supported for abs_numeric, expected Int32, Int64, Float32, Float64.")),
+        dtype => {
+            polars_bail!(InvalidOperation:format!("dtype {dtype} not \
+            supported for abs_numeric, expected Int32, Int64, Float32, Float64."))
+        }
     }
 }
 ```
+That's it! Our function is now generic over signed numeric types,
+instead of only accepting the `Int64` type.
 
-Now, if you return to `run.py`, you should be able to run
+Finally, modify the `print` line of `run.py` to be
 ```python
 print(df.with_columns(pl.col('a', 'b').mp.abs_numeric().name.suffix('_abs')))
 ```
+
+Compile with `maturin develop` (or `maturin develop --release`
+if you're benchmarking) and then run with `python run.py`. You should
+see:
+```
+shape: (3, 5)
+┌──────┬──────┬────────────┬───────┬───────┐
+│ a    ┆ b    ┆ c          ┆ a_abs ┆ b_abs │
+│ ---  ┆ ---  ┆ ---        ┆ ---   ┆ ---   │
+│ i64  ┆ f64  ┆ str        ┆ i64   ┆ f64   │
+╞══════╪══════╪════════════╪═══════╪═══════╡
+│ 1    ┆ 4.1  ┆ hello      ┆ 1     ┆ 4.1   │
+│ -1   ┆ 5.2  ┆ everybody! ┆ 1     ┆ 5.2   │
+│ null ┆ -6.3 ┆ !          ┆ null  ┆ 6.3   │
+└──────┴──────┴────────────┴───────┴───────┘
+```
+Note how we were able to take the absolute value of both `b` (`f64`)
+and `a` (`i64`) columns with `abs_numeric`!

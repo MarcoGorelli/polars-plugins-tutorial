@@ -29,17 +29,17 @@ We'd like to be able to call it as follows:
 
 ```python
 df.with_columns(
-    city=pl.col('coordinates').mp.reverse_geocode_1()
+    city=pl.col('coordinates').mp.reverse_geocode()
 )
 ```
 
 On the Python side, let's add the following function to `minimal_plugin/__init__.py`:
 
 ```python
-def reverse_geocode_1(self) -> pl.Expr:
+def reverse_geocode(self) -> pl.Expr:
     return self._expr.register_plugin(
         lib=lib,
-        symbol="reverse_geocode_1",
+        symbol="reverse_geocode",
         is_elementwise=True,
     )
 ```
@@ -54,27 +54,37 @@ Then, we can define the function like this:
 
 ```Rust
 #[polars_expr(output_type=String)]
-fn reverse_geocode_1(inputs: &[Series]) -> PolarsResult<Series> {
+fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
     let binding = inputs[0].struct_()?.field_by_name("lat")?;
     let latitude = binding.f64()?;
     let binding = inputs[0].struct_()?.field_by_name("lon")?;
     let longitude = binding.f64()?;
     let geocoder = ReverseGeocoder::new();
-    let out: StringChunked =
-        binary_elementwise(latitude, longitude, |left, right| match (left, right) {
-            (Some(left), Some(right)) => {
-                let search_result = geocoder.search((left, right));
-                // Note: in general, allocating a string for every row would be
-                // inefficient, and it would be better to write to pre-allocated
-                // buffers (see `reverse_geocode_2` from the linked GitHub repo).
-                // In this example, however, `geocoder.search` is
-                // expensive enough that it dwarves the performance cost of string
-                // allocation, so it makes little difference how we write this function.
-                Some(search_result.record.name.clone())
+    let (lhs, rhs) = align_chunks_binary(latitude, longitude);
+    let iter = lhs.downcast_iter().zip(rhs.downcast_iter()).map(
+        |(lhs_arr, rhs_arr)| -> LargeStringArray {
+            let mut buf = String::new();
+            let mut mutarr: MutableUtf8Array<i64> =
+                MutableUtf8Array::with_capacities(lhs_arr.len(), lhs_arr.len() * 20);
+
+            for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
+                match (lhs_opt_val, rhs_opt_val) {
+                    (Some(lhs_val), Some(rhs_val)) => {
+                        buf.clear();
+                        let search_result = geocoder.search((*lhs_val, *rhs_val));
+                        write!(buf, "{}", search_result.record.name).unwrap();
+                        mutarr.push(Some(&buf))
+                    }
+                    _ => mutarr.push_null(),
+                }
             }
-            _ => None,
-        });
+            let arr: Utf8Array<i64> = mutarr.into();
+            arr
+        },
+    );
+    let out = StringChunked::from_chunk_iter(lhs.name(), iter);
     Ok(out.into_series())
+}
 ```
 
 Let's try it out!
@@ -87,7 +97,7 @@ longitudes = [-45., 60, 71]
 df = pl.DataFrame({"lat": latitudes, "lon": longitudes}).with_columns(
     coords=pl.struct("lat", "lon")
 )
-print(df.select("coords", city=pl.col("coords").mp.reverse_geocode_1()))
+print(df.select("coords", city=pl.col("coords").mp.reverse_geocode()))
 ```
 ```
 shape: (3, 2)
@@ -114,5 +124,5 @@ import minimal_plugin  # noqa: F401
 latitudes = [10., 20, 15]
 longitudes = [-45., 60, 71]
 df = pl.DataFrame({"lat": latitudes, "lon": longitudes})
-print(df.select("coords", city=minimal_plugin.reverse_geocode_1('lat', 'lon')))
+print(df.select("coords", city=minimal_plugin.reverse_geocode('lat', 'lon')))
 ```

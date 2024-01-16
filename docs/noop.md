@@ -9,11 +9,46 @@ everything up!
 Here are the files we'll need to create:
 
 - `Cargo.toml`: file with Rust dependencies.
-- `pyproject.toml`: file with Python build info.
 
-Start by copying the `Cargo.toml` and `pyproject.toml`
-files from this repository - they contain the
-bare minimum you'll need to get started.
+    ```toml
+    [package]
+    # Name of the project goes here
+    # Note - it should be the same as the folder which you store your code in!
+    name = "minimal_plugin"
+    version = "0.1.0"
+    edition = "2021"
+
+    [lib]
+    # Name of the project goes here
+    # Note - it should be the same as the folder which you store your code in!
+    name = "minimal_plugin"
+    crate-type= ["cdylib"]
+
+    [dependencies]
+    pyo3 = { version = "0.20.0", features = ["extension-module"] }
+    pyo3-polars = { version = "0.10.0", features = ["derive"] }
+    serde = { version = "1", features = ["derive"] }
+    polars = { version = "0.36.2", default-features = false }
+
+    [target.'cfg(target_os = "linux")'.dependencies]
+    jemallocator = { version = "0.5", features = ["disable_initial_exec_tls"] } 
+    ```
+
+- `pyproject.toml`: file with Python build info.
+    ```toml
+    [build-system]
+    requires = ["maturin>=1.0,<2.0"]
+    build-backend = "maturin"
+
+    [project]
+    name = "minimal_plugin"  # Should match the folder with your code!
+    requires-python = ">=3.8"
+    classifiers = [
+      "Programming Language :: Rust",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Programming Language :: Python :: Implementation :: PyPy",
+    ]
+    ```
 
 We'll also need to create the following directories:
 
@@ -39,7 +74,6 @@ following content:
 ``` py
 import polars as pl
 from polars.utils.udfs import _get_shared_lib_location
-from polars.type_aliases import IntoExpr
 
 lib = _get_shared_lib_location(__file__)
 
@@ -58,40 +92,21 @@ class MinimalExamples:
 ```
 Let's go through this line-by-line:
 
-- when we'll compile Rust, we'll generate a Shared Object file.
-  The `lib` variable will hold its filepath - you don't need to
-  do anything here, just let Polars' `_get_shared_lib_location`
-  figure it out.
+- when we compile Rust, it generates a Shared Object file.
+  The `lib` variable holds its filepath;
 - Polars has several namespaces which group together related
-  functionality: `.list`, `.str`, `.dt`, and more. We'll add one
+  functionality: `.list`, `.str`, `.dt`, and more. We'll register one
   more, `.mp`, to which we'll add functionality from our minimal
-  plugin. This is what `register_expr_namespace` does.
-- Within the `.mp` namespace, we'll define our amazing do-nothing
-  function: `noop`, using the `register_plugin` function.
-  We'll need to pass the following arguments:
-  
-    * `lib`: location of Shared Object file.
-    * `symbol`: name of the Rust function we wish to call. We
-      haven't written any Rust yet, but let's put `noop` here
-      for now, and we'll implement the `noop` function in Rust
-      later.
-    * `is_elementwise`: this affects how our function works in
-      a group-by context. If your function operates independently
-      for each row, then set this to `True`. Else, if your function
-      needs to consider the whole column, set this to `False`.
-      Incorrectly setting this to `True` could result in wrong results
-      in a group-by operation! In our case, `noop` will look at each
-      row and just return its value as-is, without considering the
-      values of other rows in the column. Therefore, we set
-      `is_elementwise=True`.
-
-That's it!
+  plugin;
+- Within the `.mp` namespace, we'll register our amazing do-nothing
+  function `noop`. For now, don't pay attention to `elementwise`,
+  we'll get back to that later.
 
 ## Let's get Rusty
 
 We'll need to make two files:
 
-- `lib.rs`: list any Rust modules we want to use. We'll
+- `src/lib.rs`: list any Rust modules we want to use. We'll
   put `expressions` here (which we define in the next bullet point).
   
     ```Rust
@@ -109,7 +124,7 @@ We'll need to make two files:
     boilerplate in order to get high-performance memory allocation.
     Your plugin would work just fine without it.
 
-- `expressions.rs`: this is where we'll define `noop`
+- `src/expressions.rs`: this is where we'll define `noop`
     ``` rust
     #![allow(clippy::unused_unit)]
     use polars::prelude::*;
@@ -127,20 +142,7 @@ We'll need to make two files:
     } 
     ```
 
-That last file looks a bit complex, so let's make sense of it.
-
-### Defining `noop`
-
-Pay no attention to `polars_expr` and `output_type_func`, we'll
-get to them below. Let's start with making sense of `noop`!
-
-The input is an iterable of `Series`. In our case, `noop` just
-receives a single Series as input, but as we'll see in later
-sections, it's possible to pass multiple Series.
-
-We said we wanted our function to do nothing, so let's implement
-that: take a reference to the first (and only) input Series,
-and return a (cheap!) clone of it.
+    There's a lot to cover here so we'll break it down below.
 
 ### Defining `noop`'s schema
 
@@ -149,7 +151,7 @@ If you only ever intend to use your plugin in eager mode, then you might not car
 ```Rust
   #[polars_expr(output_type=Int64)]
 ```
-, forget about `fn same_output_type`, and be done with it, you code
+then forget about `fn same_output_type` and be done with it, you code
 will work just fine. However, just because you don't need lazy
 execution now doesn't mean you won't need it later as you scale or
 productionise, so let's take steps to get it right.
@@ -166,6 +168,16 @@ fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
 and use that to define the function output's schema. Just like
 `noop`, this function takes a reference to its only input and
 clones it.
+
+### Defining `noop`'s body
+
+The input is an iterable of `Series`. In our case, `noop` just
+receives a single Series as input, but as we'll see in later
+sections, it's possible to pass multiple Series.
+
+We said we wanted our function to do nothing, so let's implement
+that: take a reference to the first (and only) input Series,
+and return a (cheap!) clone of it.
 
 ## Putting it all together
 
@@ -184,11 +196,21 @@ df = pl.DataFrame({
 print(df.with_columns(pl.all().mp.noop().name.suffix('_noop')))
 ```
 
-Note that you can't run this file just yet - we need to compile
-our code first! Please run
+Your file tree should look a bit like this:
+
 ```
-maturin develop
+.
+├── Cargo.toml
+├── minimal_plugin
+│   └── __init__.py
+├── pyproject.toml
+├── run.py
+├── src
+│   ├── expressions.rs
+│   └── lib.rs
 ```
+
+Let's compile! Please run `maturin develop` (or `maturin develop --release` if benchmarking).
 You'll need to do this everytime you change any of your Rust code.
 It may take a while the first time, but subsequent executions will
 be significantly faster as the build process is incremental.

@@ -55,7 +55,8 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
         DataType::Float32 => Ok(impl_abs_numeric(s.f32().unwrap()).into_series()),
         DataType::Float64 => Ok(impl_abs_numeric(s.f64().unwrap()).into_series()),
         dtype => {
-            polars_bail!(InvalidOperation:format!("dtype {dtype} not supported for abs_numeric, expected Int32, Int64, Float32, Float64."))
+            polars_bail!(InvalidOperation:format!("dtype {dtype} not \
+            supported for abs_numeric, expected Int32, Int64, Float32, Float64."))
         }
     }
 }
@@ -131,25 +132,7 @@ fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
 }
 
 #[polars_expr(output_type=String)]
-fn reverse_geocode_1(inputs: &[Series]) -> PolarsResult<Series> {
-    let binding = inputs[0].struct_()?.field_by_name("lat")?;
-    let latitude = binding.f64()?;
-    let binding = inputs[0].struct_()?.field_by_name("lon")?;
-    let longitude = binding.f64()?;
-    let geocoder = ReverseGeocoder::new();
-    let out: StringChunked =
-        binary_elementwise(latitude, longitude, |left, right| match (left, right) {
-            (Some(left), Some(right)) => {
-                let search_result = geocoder.search((left, right));
-                Some(search_result.record.name.clone())
-            }
-            _ => None,
-        });
-    Ok(out.into_series())
-}
-
-#[polars_expr(output_type=String)]
-fn reverse_geocode_2(inputs: &[Series]) -> PolarsResult<Series> {
+fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
     let binding = inputs[0].struct_()?.field_by_name("lat")?;
     let latitude = binding.f64()?;
     let binding = inputs[0].struct_()?.field_by_name("lon")?;

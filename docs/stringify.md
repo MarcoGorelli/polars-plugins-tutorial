@@ -15,15 +15,19 @@ string case. We'll follow the same strategy:
 - iterate over arrow arrays
 - for each element in each array, compute the output value
 
+Put the following in `src/expressions.rs`:
+
 ```Rust
 #[polars_expr(output_type=String)]
-fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
+fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.str()?;
     let chunks = ca.downcast_iter().map(|arr| {
         arr.into_iter()
             .map(|opt_v| {
                 opt_v.map(|value| {
+                    // Note: this isn't the recommended way to do it.
+                    // See below for a better way!
                     if let Some(first_char) = value.chars().next() {
                         format!("{}{}ay", &value[1..], first_char)
                     } else {
@@ -38,21 +42,27 @@ fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-If you combine this with a Python definition:
+If you combine this with a Python definition (which you should put
+in `minimal_plugin/__init__.py`):
 
 ```python
-def pig_latinnify_1(self) -> pl.Expr:
-    return self._expr.register_plugin(
-        lib=lib,
-        symbol="pig_latinnify_1",
-        is_elementwise=True,
-    )
+    def pig_latinnify(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="pig_latinnify",
+            is_elementwise=True,
+        )
 ```
-then you'll be able to pig-latinnify a column of strings:
+then you'll be able to pig-latinnify a column of strings! To see it
+in action, compile with `maturin develop` (or `maturin develop --release`
+if you're benchmarking) and put the following in `run.py`:
 
-```
+```python
+import polars as pl
+import minimal_plugin  # noqa: F401
+
 df = pl.DataFrame({'a': ["I", "love", "pig", "latin"]})
-print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify_1()))
+print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify()))
 ```
 ```
 shape: (4, 2)
@@ -77,12 +87,11 @@ Can we do better?
 ## Pig-latinnify - take 2
 
 Yes! In this case, by just writing to already-allocated strings, we can get
-a 4x speedup (see `perf.py` from the Gitub repo - make sure to compile with
-`maturin develop --release` if you want to reproduce the timings).
+a 4x speedup by just changing `pig_latinnify` to:
 
 ```Rust
 #[polars_expr(output_type=String)]
-fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
+fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].str()?;
     let out: StringChunked = ca.apply_to_buffer(|value, output|
         if let Some(first_char) = value.chars().next() {
@@ -92,8 +101,10 @@ fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
+Make sure to also add
+```Rust
+use std::fmt::Write;
+```
+to the top of the file.
 
-If you're just getting started with plugins, I'd suggest to not worry about it.
-If your baseline was `.map_elements`, then you're already beating it. If, however,
-you want to make a plugin which you can widely distribute and share with others,
-then thinking about allocations can really make a difference.
+Thinking about allocations can really make a difference!

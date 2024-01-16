@@ -99,7 +99,7 @@ Let's go through this line-by-line:
   more, `.mp`, to which we'll add functionality from our minimal
   plugin;
 - Within the `.mp` namespace, we'll register our amazing do-nothing
-  function `noop`. For now, don't pay attention to `elementwise`,
+  function `noop`. For now, don't pay attention to `is_elementwise`,
   we'll get back to that later.
 
 ## Let's get Rusty

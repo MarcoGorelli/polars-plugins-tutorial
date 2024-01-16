@@ -7,6 +7,20 @@ For example, this looks like a fun one: [reverse_geocoder](https://crates.io/cra
 It lets us input a latitude-longitude pair of coordinates, and it'll tell us what the nearest
 city is. Can we make a plugin out of it?
 
+!!!note
+
+    Before we begin: you'll need Rust Nightly for the
+    examples in this page to compile. You can install
+    it with
+
+    ```
+    rustup toolchain install nightly
+    ```
+    and then set it as the default with
+    ```
+    rustup default nightly
+    ```
+
 ## Cargo this, cargo that
 
 If we're going to use `reverse_geocoder`, we're going to need to take it on as a dependency.
@@ -36,12 +50,12 @@ df.with_columns(
 On the Python side, let's add the following function to `minimal_plugin/__init__.py`:
 
 ```python
-def reverse_geocode(self) -> pl.Expr:
-    return self._expr.register_plugin(
-        lib=lib,
-        symbol="reverse_geocode",
-        is_elementwise=True,
-    )
+    def reverse_geocode(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="reverse_geocode",
+            is_elementwise=True,
+        )
 ```
 
 In order to be able to work with structs on the Rust side, we'll need to enable
@@ -50,7 +64,7 @@ the `dtype-struct` feature in `Cargo.toml`:
 polars = { version = "0.36.2", features = ["dtype-struct"], default-features = false }
 ```
 
-Then, we can define the function like this:
+Then, we can define the function like this in `src/expressions.rs`:
 
 ```Rust
 #[polars_expr(output_type=String)]
@@ -86,8 +100,20 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
+You'll also need to add
+```Rust
+use crate::expressions::polars_core::utils::align_chunks_binary;
+use reverse_geocoder::ReverseGeocoder;
+use polars_arrow::array::MutableArray;
+use polars_arrow::array::{MutableUtf8Array, Utf8Array};
+```
+to the top of the `src/expressions.rs` file, and add
+```toml
+polars-arrow = { version = "0.36.2", default-features = false }
+```
+to `Cargo.toml`.
 
-Let's try it out!
+Let's try it out! Put the following in `run.py`:
 ```python
 import polars as pl
 import minimal_plugin  # noqa: F401
@@ -99,6 +125,9 @@ df = pl.DataFrame({"lat": latitudes, "lon": longitudes}).with_columns(
 )
 print(df.select("coords", city=pl.col("coords").mp.reverse_geocode()))
 ```
+
+If you then compile with `maturin develop` (or `maturin develop --release`
+if you're benchmarking), and run it with `python run.py`, you'll see:
 ```
 shape: (3, 2)
 ┌──────────────┬─────────────────┐
@@ -112,11 +141,16 @@ shape: (3, 2)
 └──────────────┴─────────────────┘
 ```
 
+In this example, we took on a few extra dependencies, which increase
+the size of the package. By using plugins, we have a way of accessing
+extra functionality without having to bloat up the size of the main
+Polars install too much!
+
 ## Stretch goal
 
 Can you write a function `reverse_geocode` which accepts float expressions as input?
 
-As in, can you get the following to run?
+Can you get the following to run?
 ```python
 import polars as pl
 import minimal_plugin  # noqa: F401

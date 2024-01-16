@@ -4,6 +4,7 @@ So far, the expressions we wrote only operated on a single expression.
 
 What if we'd like to do something fancier, involving more than one expression?
 Let's try to write an expression which lets us do
+
 ```python
 df.with_columns(
     pl.col('a').mp.sum_i64(pl.col('b'))
@@ -17,19 +18,28 @@ by using the `args` argument when we register our expression. Add the following 
 `minimal_plugins/__init__.py`:
 
 ```python
-def sum_i64(self, other: IntoExpr) -> pl.Expr:
-    return self._expr.register_plugin(
-        lib=lib,
-        symbol="sum_i64",
-        is_elementwise=True,
-        args=[other]
-    )
+    def sum_i64(self, other: IntoExpr) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="sum_i64",
+            is_elementwise=True,
+            args=[other]
+        )
 ```
+Make sure to add
+```python
+from polars.type_aliases import IntoExpr
+```
+to the top of the file too.
 
 ## I’ve got 1100011 problems but binary ain't one
 
-Polars gives us a handy `binary_elementwise` function for computing elementwise operations
-involving multiple columns. Here's how we can implement `sum_i64`:
+Time to write a binary function, in the sense that it takes two
+columns as input and produces a third.
+Polars gives us a handy `binary_elementwise` function for computing binary elementwise operations
+called `binary_elementwise`.
+
+Add the following to `src/expressions.rs`:
 
 ```Rust
 #[polars_expr(output_type=Int64)]
@@ -43,23 +53,43 @@ fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
-Note that you'll need to add
+Note that you'll also need to add
 ```Rust
 use polars::prelude::arity::binary_elementwise;
 ```
 to the top of the `src/expressions.rs` file.
 
 The idea is:
-- for each row, if both `left` and `right` are valid, then we some them;
+
+- for each row, if both `left` and `right` are valid, then we sum them;
 - if either of them is missing (`None`), then we return `None`.
 
-Can you write a Python script which uses this new `.mp.sum_i64` function
-you just wrote?
+To try it out, remember to first compile with `maturin develop`
+(or `maturin develop --release` if you're benchmarking). Then
+if you make a `run.py` file with
+```python
+import polars as pl
+import minimal_plugin  # noqa: F401
+
+df = pl.DataFrame({'a': [1, 5, 2], 'b': [3, None, -1]})
+print(df.with_columns(a_plus_b=pl.col('a').mp.sum_i64(pl.col('b'))))
+```
+then `python run.py` should produce
+```
+shape: (3, 3)
+┌─────┬──────┬──────────┐
+│ a   ┆ b    ┆ a_plus_b │
+│ --- ┆ ---  ┆ ---      │
+│ i64 ┆ i64  ┆ i64      │
+╞═════╪══════╪══════════╡
+│ 1   ┆ 3    ┆ 4        │
+│ 5   ┆ null ┆ null     │
+│ 2   ┆ -1   ┆ 1        │
+└─────┴──────┴──────────┘
+```
 
 ## Get over your exercises
 
 It's widely acknowledged that the best way to learn is by doing.
 
-Try making some crazy expressions of your own. Try making a `sum_numeric` function.
-Try tapping into 3-rd party Rust crates. Go crazy - and if you're ever stuck, rembember:
-the "Polars-Plugins" channel of the Polars Discord server is always there for you!
+Can you make `sum_numeric` (a generic version of `sum_i64`)?

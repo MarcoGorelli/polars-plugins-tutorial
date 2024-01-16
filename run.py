@@ -1,9 +1,5 @@
 import polars as pl
 import minimal_plugin  # noqa: F401
 
-latitudes = [53.2225504]
-longitudes = [-4.2242607]
-df = pl.DataFrame({"lat": latitudes, "lon": longitudes}).head(3).with_columns(
-    coords=pl.struct("lat", "lon")
-)
-print(df.select("coords", city1=pl.col("coords").mp.reverse_geocode()))
+df = pl.DataFrame({'a': ["I", "love", "pig", "latin"]})
+print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify()))

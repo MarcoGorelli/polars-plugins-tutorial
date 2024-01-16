@@ -71,9 +71,47 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 ```
 
-But wait - didn't we just clone a string there? Can't we use the `write!` trick we used
-in the `pig-latinnify_2` function?
+Note: this isn't as efficient as it could be. `geocoder.search` is allocating strings,
+which we're then cloning. If you wanted to use this in a performance-critical setting,
+you might want to clone `reverse-geocoder` and then use the `write!` trick from
+`pig_latinnify_2`.
 
-The answer is - yes, but it won't make much difference here. The reason is that we're using
-a 3rd party crate (`reverse_geocoder`), and that crate is already allocating a string each
-time we call `geocoder.search`.
+Let's try it out!
+```python
+import polars as pl
+import minimal_plugin  # noqa: F401
+
+latitudes = [10., 20, 15]
+longitudes = [-45., 60, 71]
+df = pl.DataFrame({"lat": latitudes, "lon": longitudes}).with_columns(
+    coords=pl.struct("lat", "lon")
+)
+print(df.select("coords", city=pl.col("coords").mp.reverse_geocode()))
+```
+```
+shape: (3, 2)
+┌──────────────┬─────────────────┐
+│ coords       ┆ city            │
+│ ---          ┆ ---             │
+│ struct[2]    ┆ str             │
+╞══════════════╪═════════════════╡
+│ {10.0,-45.0} ┆ Remire-Montjoly │
+│ {20.0,60.0}  ┆ Sur             │
+│ {15.0,71.0}  ┆ Malvan          │
+└──────────────┴─────────────────┘
+```
+
+## Stretch goal
+
+Can you write a function `reverse_geocode` which accepts float expressions as input?
+
+As in, can you get the following to run?
+```python
+import polars as pl
+import minimal_plugin  # noqa: F401
+
+latitudes = [10., 20, 15]
+longitudes = [-45., 60, 71]
+df = pl.DataFrame({"lat": latitudes, "lon": longitudes})
+print(df.select("coords", city=minimal_plugin.reverse_geocode('lat', 'lon')))
+```

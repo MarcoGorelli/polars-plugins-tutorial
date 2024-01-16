@@ -51,7 +51,7 @@ def pig_latinnify_1(self) -> pl.Expr:
 then you'll be able to pig-latinnify a column of strings.
 
 This will already be an order of magnitude faster than using `map_elements` and
-a Python lambda function. But you may have noticed that, for ever row, we're
+a Python lambda function. But you may have noticed that, for every row, we're
 allocating a string, even if we don't need to.
 
 Can we do better?

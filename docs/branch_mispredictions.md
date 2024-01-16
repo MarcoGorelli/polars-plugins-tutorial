@@ -10,12 +10,15 @@ Before, our algorithm was:
 - only if it's not `None`, then take its absolute value
 
 However, `.abs` is a very fast operation. In this case, we can get
-a nearly 3x speedup by doing something seemingly worse:
+a nearly 3x speedup by doing something which looks like it should
+involve more operations:
 
 - for each row, compute the absolute value, regardless of
   whether the value's valid
 - put the validities back at the end. If a value was invalid to  
   begin with, it'll be invalid at the end as well.
+
+Like this, we can avoid branch mispredictions and save precious time.
 
 Here's how you can make `abs_i64` faster:
 
@@ -37,9 +40,9 @@ fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-This kind of operation is so common in Polars that there's a convenience method
-for it: `apply_values`.
-Using that, the code becomes:
+or, if you like to keep things simple (this kind of operation is
+so common in Polars that there's a convenience method
+for it: `apply_values`):
 ```Rust
 #[polars_expr(output_type=Int64)]
 fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {

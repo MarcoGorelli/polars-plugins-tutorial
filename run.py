@@ -12,3 +12,6 @@ def pig_latinnify_python(s: str) -> str:
     return s
 
 print(df.with_columns(b=pl.col('a').map_elements(pig_latinnify_python)))
+
+df = pl.DataFrame({'a': ["I", "love", "pig", "latin"]})
+print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify_1()))

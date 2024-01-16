@@ -48,7 +48,25 @@ def pig_latinnify_1(self) -> pl.Expr:
         is_elementwise=True,
     )
 ```
-then you'll be able to pig-latinnify a column of strings.
+then you'll be able to pig-latinnify a column of strings:
+
+```
+df = pl.DataFrame({'a': ["I", "love", "pig", "latin"]})
+print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify_1()))
+```
+```
+shape: (4, 2)
+┌───────┬─────────────┐
+│ a     ┆ a_pig_latin │
+│ ---   ┆ ---         │
+│ str   ┆ str         │
+╞═══════╪═════════════╡
+│ I     ┆ Iay         │
+│ love  ┆ ovelay      │
+│ pig   ┆ igpay       │
+│ latin ┆ atinlay     │
+└───────┴─────────────┘
+```
 
 This will already be an order of magnitude faster than using `map_elements` and
 a Python lambda function. But you may have noticed that, for every row, we're

@@ -66,3 +66,10 @@ class MinimalExamples:
             symbol="reverse_geocode",
             is_elementwise=True,
         )
+
+    def abs_i64_fast(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="abs_i64_fast",
+            is_elementwise=True,
+        )

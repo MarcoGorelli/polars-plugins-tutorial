@@ -59,6 +59,11 @@ use polars::prelude::arity::binary_elementwise;
 ```
 to the top of the `src/expressions.rs` file.
 
+!!! note
+
+    There's a faster way of implementing this particular operation,
+    which we'll cover later in the tutorial in section 7.
+
 The idea is:
 
 - for each row, if both `left` and `right` are valid, then we sum them;

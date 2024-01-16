@@ -6,30 +6,17 @@ import pandas as pd
 import polars as pl
 import minimal_plugin  # noqa: F401
 import numpy as np
-N = 1_000_000
-s_arr = pl.from_pandas(pd.Series(pd._testing.rands_array(10, N)).astype('string[pyarrow]'))
-def pig_latinnify_python(s: str) -> str:
-    if s:
-        return s[1:] + s[0] + 'ay'
-    return s
+rng = np.random.default_rng(12345)
+N = 10_000_000
 
-
-df = pl.DataFrame({
-    'a': s_arr
-})
+df = pl.DataFrame({'a': rng.integers(low=-100, high=100, size=N)})
+df = df.with_row_index().with_columns(
+    pl.when(pl.col('index')%2==1).then(pl.lit(None)).otherwise(pl.col('a')).alias('a')
+)
 """
 
 results = np.array(timeit.Timer(
-    stmt="df.select(pl.col('a').map_elements(pig_latinnify_python))",
-    setup=setup,
-    )
-    .repeat(7, 3)
-)/3
-print(f'min: {min(results)}')
-print(f'max: {max(results)}')
-print(f'{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}')
-results = np.array(timeit.Timer(
-    stmt="df.select(pl.col('a').mp.pig_latinnify_1())",
+    stmt="df.select(pl.col('a').mp.abs_i64_fast())",
     setup=setup,
     )
     .repeat(7, 3)
@@ -39,7 +26,7 @@ print(f'max: {max(results)}')
 print(f'{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}')
 
 results = np.array(timeit.Timer(
-    stmt="df.select(pl.col('a').mp.pig_latinnify_2())",
+    stmt="df.select(pl.col('a').mp.abs_i64())",
     setup=setup,
     )
     .repeat(7, 3)

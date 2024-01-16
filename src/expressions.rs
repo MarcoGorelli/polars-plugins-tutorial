@@ -1,7 +1,7 @@
 #![allow(clippy::unused_unit)]
 use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
-use polars_arrow::array::MutableArray;
+use polars_arrow::array::{Int64Array, MutableArray};
 use polars_arrow::array::{MutableUtf8Array, Utf8Array};
 use polars_core::utils::align_chunks_binary;
 use pyo3_polars::derive::polars_expr;
@@ -163,5 +163,21 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
         },
     );
     let out = StringChunked::from_chunk_iter(lhs.name(), iter);
+    Ok(out.into_series())
+}
+
+#[polars_expr(output_type=Int64)]
+fn abs_i64_fast(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.i64()?;
+    let chunks = ca
+        .downcast_iter()
+        .map(|arr| arr.values().as_slice())
+        .zip(ca.iter_validities())
+        .map(|(slice, validity)| {
+            let arr: Int64Array = slice.iter().copied().map(|x| x.abs()).collect_arr();
+            arr.with_validity(validity.cloned())
+        });
+    let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);
     Ok(out.into_series())
 }

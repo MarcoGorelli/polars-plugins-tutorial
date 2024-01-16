@@ -74,7 +74,8 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
 Note: this isn't as efficient as it could be. `geocoder.search` is allocating strings,
 which we're then cloning. If you wanted to use this in a performance-critical setting,
 you might want to clone `reverse-geocoder` and then use the `write!` trick from
-`pig_latinnify_2`.
+`pig_latinnify_2`. In pratice, for this example, the strings are quite short,
+so it makes little difference.
 
 Let's try it out!
 ```python

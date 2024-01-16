@@ -60,10 +60,17 @@ class MinimalExamples:
             is_elementwise=True,
         )
 
-    def reverse_geocode(self) -> pl.Expr:
+    def reverse_geocode_1(self) -> pl.Expr:
         return self._expr.register_plugin(
             lib=lib,
-            symbol="reverse_geocode",
+            symbol="reverse_geocode_1",
             is_elementwise=True,
         )
 
+
+    def reverse_geocode_2(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="reverse_geocode_2",
+            is_elementwise=True,
+        )

@@ -131,7 +131,7 @@ fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
 }
 
 #[polars_expr(output_type=String)]
-fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
+fn reverse_geocode_1(inputs: &[Series]) -> PolarsResult<Series> {
     let binding = inputs[0].struct_()?.field_by_name("lat")?;
     let latitude = binding.f64()?;
     let binding = inputs[0].struct_()?.field_by_name("lon")?;
@@ -145,5 +145,38 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
             }
             _ => None,
         });
+    Ok(out.into_series())
+}
+
+#[polars_expr(output_type=String)]
+fn reverse_geocode_2(inputs: &[Series]) -> PolarsResult<Series> {
+    let binding = inputs[0].struct_()?.field_by_name("lat")?;
+    let latitude = binding.f64()?;
+    let binding = inputs[0].struct_()?.field_by_name("lon")?;
+    let longitude = binding.f64()?;
+    let geocoder = ReverseGeocoder::new();
+    let (lhs, rhs) = align_chunks_binary(latitude, longitude);
+    let iter = lhs.downcast_iter().zip(rhs.downcast_iter()).map(
+        |(lhs_arr, rhs_arr)| -> LargeStringArray {
+            let mut buf = String::new();
+            let mut mutarr: MutableUtf8Array<i64> =
+                MutableUtf8Array::with_capacities(lhs_arr.len(), lhs_arr.len() * 20);
+
+            for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
+                match (lhs_opt_val, rhs_opt_val) {
+                    (Some(lhs_val), Some(rhs_val)) => {
+                        buf.clear();
+                        let search_result = geocoder.search((*lhs_val, *rhs_val));
+                        write!(buf, "{}", search_result.record.name).unwrap();
+                        mutarr.push(Some(&buf))
+                    }
+                    _ => mutarr.push_null(),
+                }
+            }
+            let arr: Utf8Array<i64> = mutarr.into();
+            arr
+        },
+    );
+    let out = StringChunked::from_chunk_iter(lhs.name(), iter);
     Ok(out.into_series())
 }

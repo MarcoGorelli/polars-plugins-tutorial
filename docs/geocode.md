@@ -29,17 +29,17 @@ We'd like to be able to call it as follows:
 
 ```python
 df.with_columns(
-    city=pl.col('coordinates').mp.reverse_geocode()
+    city=pl.col('coordinates').mp.reverse_geocode_1()
 )
 ```
 
 On the Python side, let's add the following function to `minimal_plugin/__init__.py`:
 
 ```python
-def reverse_geocode(self) -> pl.Expr:
+def reverse_geocode_1(self) -> pl.Expr:
     return self._expr.register_plugin(
         lib=lib,
-        symbol="reverse_geocode",
+        symbol="reverse_geocode_1",
         is_elementwise=True,
     )
 ```
@@ -54,7 +54,7 @@ Then, we can define the function like this:
 
 ```Rust
 #[polars_expr(output_type=String)]
-fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
+fn reverse_geocode_1(inputs: &[Series]) -> PolarsResult<Series> {
     let binding = inputs[0].struct_()?.field_by_name("lat")?;
     let latitude = binding.f64()?;
     let binding = inputs[0].struct_()?.field_by_name("lon")?;
@@ -64,18 +64,18 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
         binary_elementwise(latitude, longitude, |left, right| match (left, right) {
             (Some(left), Some(right)) => {
                 let search_result = geocoder.search((left, right));
+                // Note: in general, allocating a string for every row would be
+                // inefficient, and it would be better to write to pre-allocated
+                // buffers (see `reverse_geocode_2` from the linked GitHub repo).
+                // In this example, however, `geocoder.search` is
+                // expensive enough that it dwarves the performance cost of string
+                // allocation, so it makes little difference how we write this function.
                 Some(search_result.record.name.clone())
             }
             _ => None,
         });
     Ok(out.into_series())
 ```
-
-Note: this isn't as efficient as it could be. `geocoder.search` is allocating strings,
-which we're then cloning. If you wanted to use this in a performance-critical setting,
-you might want to clone `reverse-geocoder` and then use the `write!` trick from
-`pig_latinnify_2`. In pratice, for this example, the strings are quite short,
-so it makes little difference.
 
 Let's try it out!
 ```python
@@ -87,7 +87,7 @@ longitudes = [-45., 60, 71]
 df = pl.DataFrame({"lat": latitudes, "lon": longitudes}).with_columns(
     coords=pl.struct("lat", "lon")
 )
-print(df.select("coords", city=pl.col("coords").mp.reverse_geocode()))
+print(df.select("coords", city=pl.col("coords").mp.reverse_geocode_1()))
 ```
 ```
 shape: (3, 2)
@@ -114,5 +114,5 @@ import minimal_plugin  # noqa: F401
 latitudes = [10., 20, 15]
 longitudes = [-45., 60, 71]
 df = pl.DataFrame({"lat": latitudes, "lon": longitudes})
-print(df.select("coords", city=minimal_plugin.reverse_geocode('lat', 'lon')))
+print(df.select("coords", city=minimal_plugin.reverse_geocode_1('lat', 'lon')))
 ```

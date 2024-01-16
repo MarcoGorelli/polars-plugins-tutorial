@@ -1,17 +1,15 @@
 import polars as pl
 import minimal_plugin  # noqa: F401
+import numpy as np
+rng = np.random.default_rng()
 
+pl.Config.set_fmt_str_lengths(60)
 
-df = pl.DataFrame({'a': ['fdsafasd', 'fdasfsdfae', 'aaafsdfa']})
-print(df.with_columns(b=pl.col('a').mp.pig_latinnify_1()))
-print(df.with_columns(b=pl.col('a').mp.pig_latinnify_2()))
+latitudes = [53.2225504]
+longitudes = [-4.2242607]
 
-def pig_latinnify_python(s: str) -> str:
-    if s:
-        return s[1:] + 'ay'
-    return s
-
-print(df.with_columns(b=pl.col('a').map_elements(pig_latinnify_python)))
-
-df = pl.DataFrame({'a': ["I", "love", "pig", "latin"]})
-print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify_1()))
+df = pl.DataFrame({'lat': latitudes, 'lon': longitudes}).with_columns(coords=pl.struct('lat', 'lon'))
+print(df.select(
+    city1=pl.col('coords').mp.reverse_geocode_1(),
+    city2=pl.col('coords').mp.reverse_geocode_2(),
+))

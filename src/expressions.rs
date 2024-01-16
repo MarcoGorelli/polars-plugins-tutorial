@@ -1,11 +1,13 @@
 #![allow(clippy::unused_unit)]
 use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
+use polars_arrow::array::MutableArray;
+use polars_arrow::array::{MutableUtf8Array, Utf8Array};
+use polars_core::utils::align_chunks_binary;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
-use pyo3_polars::export::polars_core::utils::arrow::array::MutableUtf8Array;
-use pyo3_polars::export::polars_core::utils::arrow::compute::arithmetics::basic::mul;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
+use reverse_geocoder::ReverseGeocoder;
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -120,10 +122,28 @@ fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
 #[polars_expr(output_type=String)]
 fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].str()?;
-    let out: StringChunked = ca.apply_to_buffer(|value, output|
+    let out: StringChunked = ca.apply_to_buffer(|value, output| {
         if let Some(first_char) = value.chars().next() {
             write!(output, "{}{}ay", &value[1..], first_char).unwrap()
         }
-    );
+    });
+    Ok(out.into_series())
+}
+
+#[polars_expr(output_type=String)]
+fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
+    let binding = inputs[0].struct_()?.field_by_name("lat")?;
+    let latitude = binding.f64()?;
+    let binding = inputs[0].struct_()?.field_by_name("lon")?;
+    let longitude = binding.f64()?;
+    let geocoder = ReverseGeocoder::new();
+    let out: StringChunked =
+        binary_elementwise(latitude, longitude, |left, right| match (left, right) {
+            (Some(left), Some(right)) => {
+                let search_result = geocoder.search((left, right));
+                Some(search_result.record.name.clone())
+            }
+            _ => None,
+        });
     Ok(out.into_series())
 }

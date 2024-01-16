@@ -59,3 +59,11 @@ class MinimalExamples:
             symbol="pig_latinnify_2",
             is_elementwise=True,
         )
+
+    def reverse_geocode(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="reverse_geocode",
+            is_elementwise=True,
+        )
+

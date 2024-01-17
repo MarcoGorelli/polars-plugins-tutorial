@@ -76,7 +76,7 @@ in another example.
 A Series is backed by chunked arrays, each of which holds data which is contiguous in
 memory.
 
-Here's an example of a Series backed  by multipe chunks:
+Here's an example of a Series backed  by multiple chunks:
 ```python
 In [27]: s = pl.Series([1,2,3])
 

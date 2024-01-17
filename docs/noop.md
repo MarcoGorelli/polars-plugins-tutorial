@@ -211,7 +211,7 @@ Your file tree should look a bit like this:
 ```
 
 Let's compile! Please run `maturin develop` (or `maturin develop --release` if benchmarking).
-You'll need to do this everytime you change any of your Rust code.
+You'll need to do this every time you change any of your Rust code.
 It may take a while the first time, but subsequent executions will
 be significantly faster as the build process is incremental.
 

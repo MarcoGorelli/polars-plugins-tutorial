@@ -4,7 +4,7 @@
         <img
                 width="400"
                 alt="image"
-                src="https://github.com/MarcoGorelli/polars-plugins-tutorial/blob/a1df39c6385196d4aa5a895cae9ac231ce868351/docs/assets/image.png">
+                src="https://github.com/MarcoGorelli/polars-plugins-tutorial/assets/33491632/5e9b5a11-77ca-4487-a75d-a04caba99ce8">
 </h1>
 
 - ✅ Unlock super-high performance

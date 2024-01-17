@@ -1,4 +1,5 @@
 import timeit
+import warnings
 import numpy as np
 
 setup = """
@@ -31,6 +32,18 @@ results = np.array(timeit.Timer(
     )
     .repeat(7, 3)
 )/3
+print(f'min: {min(results)}')
+print(f'max: {max(results)}')
+print(f'{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}')
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    results = np.array(timeit.Timer(
+        stmt="df.select(pl.col('a').map_elements(lambda x: abs(x)))",
+        setup=setup,
+        )
+        .repeat(7, 3)
+    )/3
 print(f'min: {min(results)}')
 print(f'max: {max(results)}')
 print(f'{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}')

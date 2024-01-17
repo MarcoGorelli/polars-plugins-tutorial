@@ -30,6 +30,8 @@ definition of `noop`:
 fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.i64()?;
+    // NOTE: there's a faster way of implementing `abs`, which we'll
+    // cover in section 7.
     let chunks = ca.downcast_iter().map(|arr| {
         arr.into_iter()
             .map(|opt_v| opt_v.map(|v| v.abs()))
@@ -42,14 +44,18 @@ fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
 
 The general idea here is:
 
-- A Series is backed by a ChunkedArray. Each chunk is an Arrow Array
-  , in which data is stored contiguously in memory.
-  So we're going to start by iterating over chunks by calling
+- So we're going to start by iterating over chunks (check section 0) by calling
   `downcast_iter`.
 - For each chunk, we iterate over the elements in that array (`into_iter`)
 - Each element can either be `Some(i64)`, or `None`. If it's `None`,
   we return `None`, whereas if it's `Some(i64)`, then we take its
-  absolute value.
+  absolute value
+
+    !!!note
+
+        There's a faster way of implementing `abs`, which you'll learn about
+        in section 7.
+
 - We produce a new ChunkedArray, convert it to Series, and return it.
 
 Let's try this out. Make a Python file `run.py` with the following:
@@ -80,11 +86,6 @@ shape: (3, 4)
 ```
 then you did everything correctly!
 
-!!! note
-
-    There's a faster way of implementing this particular operation,
-    which we'll cover later in the tutorial in section 7.
-
 ## `abs_numeric`
 
 The code above unfortunately only supports `Int64` columns. Let's try to
@@ -106,6 +107,8 @@ Paste in the following:
 
 ```Rust
 fn impl_abs_numeric(ca: &Int64Chunked) -> Int64Chunked {
+    // NOTE: there's a faster way of implementing `abs`, which we'll
+    // cover in section 7.
     let chunks = ca.downcast_iter().map(|arr| {
         arr.into_iter()
             .map(|opt_v| opt_v.map(|v| v.abs()))
@@ -130,12 +133,15 @@ You can read about generics
 [here](https://doc.rust-lang.org/book/ch10-00-generics.html) if you're
 not familiar with them.
 Change `impl_abs_numeric` to:
+
 ```Rust
 fn impl_abs_numeric<T>(ca: &ChunkedArray<T>) -> ChunkedArray<T>
 where
     T: PolarsNumericType,
     T::Native: Signed,
 {
+    // NOTE: there's a faster way of implementing `abs`, which we'll
+    // cover in section 7.
     let chunks = ca.downcast_iter().map(|arr| {
         arr.into_iter()
             .map(|opt_v| opt_v.map(|v| v.abs()))

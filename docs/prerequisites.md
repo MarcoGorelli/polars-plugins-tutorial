@@ -39,3 +39,72 @@ how to do that.
 That's it! However, you are highly encouraged to also install
 [rust-analyzer](https://rust-analyzer.github.io/manual.html) if you want to
 improve your Rust-writing experience by exactly 120%.
+
+## What's in a Series?
+
+If you take a look at a Series such as
+```python
+In [9]: s = pl.Series([None, 2, 3]) + 42
+
+In [10]: s
+Out[10]:
+shape: (3,)
+Series: '' [i64]
+[
+        null
+        44
+        45
+]
+```
+you may be tempted to conclude that it contains three values: `[null, 1, 2]`.
+
+In reality, the Series contains three value, and an associated validity mask which records
+whether each row is valid. In this particular case:
+
+- values: `[42, 44, 45]`
+- validity mask: `[False, True, True]`
+
+You can inspect these with `s._get_buffer(0)` and `s._get_buffer(1)`.
+If a value appears as `null` to you, then there's no guarantee about what physical number
+is behind it! It was `42` here, but it could well be `43` in another example.
+
+## What's a chunk?
+
+A Series is backed by chunked arrays, each of which holds data which is contiguous in
+memory.
+
+Here's an example of a Series backed  by multipe chunks:
+```python
+In [27]: s = pl.Series([1,2,3])
+
+In [28]: s = s.append(pl.Series([99, 11]))
+
+In [29]: s
+Out[29]:
+shape: (5,)
+Series: '' [i64]
+[
+        1
+        2
+        3
+        99
+        11
+]
+
+In [30]: s.get_chunks()
+Out[30]:
+[shape: (3,)
+ Series: '' [i64]
+ [
+        1
+        2
+        3
+ ],
+ shape: (2,)
+ Series: '' [i64]
+ [
+        99
+        11
+ ]]
+```
+Chunked arrays will come up in several examples in this tutorial.

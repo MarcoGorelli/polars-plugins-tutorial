@@ -58,13 +58,15 @@ Series: '' [i64]
 ```
 you may be tempted to conclude that it contains three values: `[null, 1, 2]`.
 
-In reality, the Series contains three value, and an associated validity mask which records
-whether each row is valid. In this particular case:
+However, if you print out `s._get_buffer(0)` and `s._get_buffer(1)`, you'll see
+something different:
 
-- values: `[42, 44, 45]`
-- validity mask: `[False, True, True]`
+- `s._get_buffer(0)`: `[42, 44, 45]`. These are the _values_.
+- `s._get_buffer(1)`: `[False, True, True]`. These are the _validities_.
 
-You can inspect these with `s._get_buffer(0)` and `s._get_buffer(1)`.
+So we don't really have integers and `null` mixed together into a single array - we
+have a pair of arrays, one holding values and another one holding booleans indicating
+whether each value is valid or not.
 If a value appears as `null` to you, then there's no guarantee about what physical number
 is behind it! It was `42` here, but it could well be `43` in another example.
 

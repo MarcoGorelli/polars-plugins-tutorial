@@ -1,4 +1,5 @@
 #![allow(clippy::unused_unit)]
+use serde::Deserialize;
 use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
 // use polars_arrow::array::MutableArray;
@@ -180,5 +181,20 @@ fn abs_i64_fast(inputs: &[Series]) -> PolarsResult<Series> {
             arr.with_validity(validity.cloned())
         });
     let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);
+    Ok(out.into_series())
+}
+
+#[derive(Deserialize)]
+struct AddSuffixKwargs {
+    suffix: String,
+}
+
+#[polars_expr(output_type=String)]
+fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.str()?;
+    let out = ca.apply_to_buffer(|value, output| {
+        write!(output, "{}{}", value, kwargs.suffix).unwrap();
+    });
     Ok(out.into_series())
 }

@@ -74,3 +74,10 @@ class MinimalExamples:
             is_elementwise=True,
         )
     
+    def add_suffix(self, *, suffix: str) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="add_suffix",
+            is_elementwise=True,
+            kwargs={"suffix": suffix}
+        )

@@ -18,6 +18,7 @@ nav:
   - stringify.md
   - geocode.md
   - branch_mispredictions.md
+  - arguments.md
   - where_to_go.md
 
 plugins:

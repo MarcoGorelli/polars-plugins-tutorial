@@ -12,3 +12,8 @@
 - ✅ Impress everybody with your superpowers
 
 This repository is meant to accompany the tutorial from https://marcogorelli.github.io/polars-plugins-tutorial/.
+
+Logo
+----
+
+Thanks to [Olha Urdeichuk](https://www.fiverr.com/olhaurdeichuk) for the illustration.

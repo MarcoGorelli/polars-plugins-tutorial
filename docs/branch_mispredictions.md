@@ -19,6 +19,18 @@ is valid or not dwarves the actual `.abs` calculation.
 
 Here's how you can make `abs_i64` faster:
 
+```Rust
+#[polars_expr(output_type=Int64)]
+fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.i64()?;
+    let out = ca.apply_values(|x| x.abs());
+    Ok(out.into_series())
+}
+```
+
+or, if you like to things to be really explicit:
+
 ```rust
 #[polars_expr(output_type=Int64)]
 fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
@@ -37,20 +49,7 @@ fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-or, if you like to keep things simple (this kind of operation is
-so common in Polars that there's a convenience method
-for it: `apply_values`):
-```Rust
-#[polars_expr(output_type=Int64)]
-fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
-    let s = &inputs[0];
-    let ca = s.i64()?;
-    let out = ca.apply_values(|x| x.abs());
-    Ok(out.into_series())
-}
-```
-
-For more complex operations, it may be that computing the operation
+For operations more complex than `.abs`, it may be that computing the operation
 for only the non-null values is cheaper. In general, you should
 measure, not guess.
 If you're just starting out with plugins and only need to beat

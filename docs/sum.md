@@ -46,6 +46,8 @@ Add the following to `src/expressions.rs`:
 fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let left = inputs[0].i64()?;
     let right = inputs[1].i64()?;
+    // Note: there's a faster way of summing two columns, see
+    // section 7.
     let out: Int64Chunked = binary_elementwise(left, right, |left, right| match (left, right) {
         (Some(left), Some(right)) => Some(left + right),
         _ => None,

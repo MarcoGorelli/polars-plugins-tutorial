@@ -17,6 +17,13 @@ class MinimalExamples:
             is_elementwise=True,
         )
 
+    def rename(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="rename",
+            is_elementwise=True,
+        )
+
     def abs_i64(self) -> pl.Expr:
         return self._expr.register_plugin(
             lib=lib,
@@ -73,3 +80,4 @@ class MinimalExamples:
             symbol="abs_i64_fast",
             is_elementwise=True,
         )
+    

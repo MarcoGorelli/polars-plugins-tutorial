@@ -1,13 +1,14 @@
 #![allow(clippy::unused_unit)]
 use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
-use polars_arrow::array::{Int64Array, MutableArray};
-use polars_arrow::array::{MutableUtf8Array, Utf8Array};
+// use polars_arrow::array::{Int64Array, MutableArray};
+// use polars_arrow::array::{MutableUtf8Array, Utf8Array};
 use polars_core::utils::align_chunks_binary;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
-use reverse_geocoder::ReverseGeocoder;
+use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
+// use reverse_geocoder::ReverseGeocoder;
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -18,6 +19,13 @@ fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
 fn noop(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     Ok(s.clone())
+}
+
+#[polars_expr(output_type_func=same_output_type)]
+fn rename(inputs: &[Series]) -> PolarsResult<Series> {
+    let mut s = inputs[0].clone();
+    s.rename("foo");
+    Ok(s)
 }
 
 #[polars_expr(output_type=Int64)]
@@ -133,38 +141,38 @@ fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
-#[polars_expr(output_type=String)]
-fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
-    let binding = inputs[0].struct_()?.field_by_name("lat")?;
-    let latitude = binding.f64()?;
-    let binding = inputs[0].struct_()?.field_by_name("lon")?;
-    let longitude = binding.f64()?;
-    let geocoder = ReverseGeocoder::new();
-    let (lhs, rhs) = align_chunks_binary(latitude, longitude);
-    let iter = lhs.downcast_iter().zip(rhs.downcast_iter()).map(
-        |(lhs_arr, rhs_arr)| -> LargeStringArray {
-            let mut buf = String::new();
-            let mut mutarr: MutableUtf8Array<i64> =
-                MutableUtf8Array::with_capacities(lhs_arr.len(), lhs_arr.len() * 20);
+// #[polars_expr(output_type=String)]
+// fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
+//     let binding = inputs[0].struct_()?.field_by_name("lat")?;
+//     let latitude = binding.f64()?;
+//     let binding = inputs[0].struct_()?.field_by_name("lon")?;
+//     let longitude = binding.f64()?;
+//     let geocoder = ReverseGeocoder::new();
+//     let (lhs, rhs) = align_chunks_binary(latitude, longitude);
+//     let iter = lhs.downcast_iter().zip(rhs.downcast_iter()).map(
+//         |(lhs_arr, rhs_arr)| -> LargeStringArray {
+//             let mut buf = String::new();
+//             let mut mutarr: MutableUtf8Array<i64> =
+//                 MutableUtf8Array::with_capacities(lhs_arr.len(), lhs_arr.len() * 20);
 
-            for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
-                match (lhs_opt_val, rhs_opt_val) {
-                    (Some(lhs_val), Some(rhs_val)) => {
-                        buf.clear();
-                        let search_result = geocoder.search((*lhs_val, *rhs_val));
-                        write!(buf, "{}", search_result.record.name).unwrap();
-                        mutarr.push(Some(&buf))
-                    }
-                    _ => mutarr.push_null(),
-                }
-            }
-            let arr: Utf8Array<i64> = mutarr.into();
-            arr
-        },
-    );
-    let out = StringChunked::from_chunk_iter(lhs.name(), iter);
-    Ok(out.into_series())
-}
+//             for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
+//                 match (lhs_opt_val, rhs_opt_val) {
+//                     (Some(lhs_val), Some(rhs_val)) => {
+//                         buf.clear();
+//                         let search_result = geocoder.search((*lhs_val, *rhs_val));
+//                         write!(buf, "{}", search_result.record.name).unwrap();
+//                         mutarr.push(Some(&buf))
+//                     }
+//                     _ => mutarr.push_null(),
+//                 }
+//             }
+//             let arr: Utf8Array<i64> = mutarr.into();
+//             arr
+//         },
+//     );
+//     let out = StringChunked::from_chunk_iter(lhs.name(), iter);
+//     Ok(out.into_series())
+// }
 
 #[polars_expr(output_type=Int64)]
 fn abs_i64_fast(inputs: &[Series]) -> PolarsResult<Series> {
@@ -175,7 +183,7 @@ fn abs_i64_fast(inputs: &[Series]) -> PolarsResult<Series> {
         .map(|arr| arr.values().as_slice())
         .zip(ca.iter_validities())
         .map(|(slice, validity)| {
-            let arr: Int64Array = slice.iter().copied().map(|x| x.abs()).collect_arr();
+            let arr: PrimitiveArray<i64> = slice.iter().copied().map(|x| x.abs()).collect_arr();
             arr.with_validity(validity.cloned())
         });
     let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);

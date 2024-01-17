@@ -9,4 +9,5 @@
 This tutorial is just meant to get you started. Once you've understood the
 basics, you can customise the examples according to your needs.
 
-Code to follow along is here: https://github.com/MarcoGorelli/polars-plugins-tutorial.
+I'd like to postulate that the material covered here gives you enough tools
+that you can address at least 99% of inefficient `map_elements` tasks.

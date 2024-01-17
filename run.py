@@ -1,5 +1,5 @@
 import polars as pl
 import minimal_plugin  # noqa: F401
 
-df = pl.DataFrame({'a': ["I", "love", "pig", "latin"]})
-print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify()))
+df = pl.DataFrame({'a': [1,2,3], 'b': [4,5,6]})
+print(df.with_columns(pl.col('a').mp.rename()))

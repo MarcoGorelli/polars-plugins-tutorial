@@ -89,7 +89,7 @@ then you did everything correctly!
 ## `abs_numeric`
 
 The code above unfortunately only supports `Int64` columns. Let's try to
-generalise it a bit, so that it can accept any numeric column.
+generalise it a bit, so that it can accept any signed numeric column.
 
 First, add the following definition to `minimal_plugin/__init__.py`:
 

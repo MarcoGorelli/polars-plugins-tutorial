@@ -26,8 +26,8 @@ fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
         arr.into_iter()
             .map(|opt_v| {
                 opt_v.map(|value| {
-                    // Note: this isn't the recommended way to do it.
-                    // See below for a better way!
+                    // Note: this isn't the recommended way to do it
+                    // and is included only for educational purposes.
                     if let Some(first_char) = value.chars().next() {
                         format!("{}{}ay", &value[1..], first_char)
                     } else {

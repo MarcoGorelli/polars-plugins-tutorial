@@ -6,7 +6,7 @@ The operations we've seen so far have all been elementwise, e.g.:
 - for each row, we summed the respective values in two columns
 
 Let's do something (completely) different - instead of working with
-each row in isolation, we'll calculate something which depends on the
+each row in isolation, we'll calculate a quantity which depends on the
 rows which precede it.
 
 We're going implement `cum_sum`.
@@ -29,7 +29,7 @@ You'll see why this is so important at the end of this page.
 
 Time to learn a new Rust function: `scan`.
 If you're not familiar with it, please take a little break from this tutorial
-and read [the scan docs](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.scan).
+and [read the scan docs](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.scan).
 
 Welcome back! Let's use our newfound scan-superpowers to implement `cum_sum`. Here's what goes into `src/expressions.rs`:
 ```Rust

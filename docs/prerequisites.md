@@ -8,11 +8,9 @@ How much Rust do you need to know to write your own Polars plugin? Less than
 you think.
 
 If you pick up [The Rust Programming Language](https://doc.rust-lang.org/book/)
-and can make it through the first 9 chapters, then I postulate
-that you'll have enough knowledge at least 99% of inefficient `map_elements`
-calls.
-If you want to make a plugin which is generic enough that you can share
-it with others, then you may need chapter 10 as well.
+and can make it through the first 10 chapters, then I postulate
+that you'll have enough knowledge to replace the vast majority of
+inefficient `map_elements` calls.
 
 You'll also need basic Python knowledge: classes, decorators, and functions.
 
@@ -22,7 +20,7 @@ for - the compiler will probably help you more than you're expecting.
 
 ## Software
 
-First, you should probably make new directory for this project.
+First, you should probably make a new directory for this project.
 Either clone https://github.com/MarcoGorelli/polars-plugins-tutorial,
 or make a new directory.
 

@@ -146,15 +146,9 @@ We'll need to make two files:
 
 ### Defining `noop`'s schema
 
-If you only ever intend to use your plugin in eager mode, then you might not care about this. You _could_ just write
-
-```Rust
-  #[polars_expr(output_type=Int64)]
-```
-then forget about `fn same_output_type` and be done with it, you code
-will work just fine. However, just because you don't need lazy
-execution now doesn't mean you won't need it later as you scale or
-productionise, so let's take steps to get it right.
+This only affects lazy execution. If you only ever intend to use your plugin
+in eager mode, then you might not care about it, but this a tutorial, so
+let's take care to get it right.
 
 Our beautiful `noop` doesn't change the data type (in fact, it doesn't change anything...)
 so we'll just write a function which returns the same input type:

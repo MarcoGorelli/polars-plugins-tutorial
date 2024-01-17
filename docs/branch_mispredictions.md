@@ -41,7 +41,7 @@ fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
         .map(|arr| arr.values().as_slice())
         .zip(ca.iter_validities())
         .map(|(slice, validity)| {
-            let arr: Int64Array = slice.iter().copied().map(|x| x.abs()).collect_arr();
+            let arr: PrimitiveArray<i64> = slice.iter().copied().map(|x| x.abs()).collect_arr();
             arr.with_validity(validity.cloned())
         });
     let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);

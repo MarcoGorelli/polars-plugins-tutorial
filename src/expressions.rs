@@ -1,7 +1,7 @@
 #![allow(clippy::unused_unit)]
 use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
-// use polars_arrow::array::{Int64Array, MutableArray};
+// use polars_arrow::array::MutableArray;
 // use polars_arrow::array::{MutableUtf8Array, Utf8Array};
 use polars_core::utils::align_chunks_binary;
 use pyo3_polars::derive::polars_expr;
@@ -19,13 +19,6 @@ fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
 fn noop(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     Ok(s.clone())
-}
-
-#[polars_expr(output_type_func=same_output_type)]
-fn rename(inputs: &[Series]) -> PolarsResult<Series> {
-    let mut s = inputs[0].clone();
-    s.rename("foo");
-    Ok(s)
 }
 
 #[polars_expr(output_type=Int64)]

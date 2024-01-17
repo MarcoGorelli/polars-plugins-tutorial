@@ -68,7 +68,8 @@ So we don't really have integers and `null` mixed together into a single array -
 have a pair of arrays, one holding values and another one holding booleans indicating
 whether each value is valid or not.
 If a value appears as `null` to you, then there's no guarantee about what physical number
-is behind it! It was `42` here, but it could well be `43` in another example.
+is behind it! It was `42` here, but it could well be `43`, or any other number,
+in another example.
 
 ## What's a chunk?
 

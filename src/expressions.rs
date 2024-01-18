@@ -129,7 +129,10 @@ fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].str()?;
     let out: StringChunked = ca.apply_to_buffer(|value, output| {
         if let Some(first_char) = value.chars().next() {
-            write!(output, "{}{}ay", &value[1..], first_char).unwrap()
+            match first_char.to_ascii_lowercase() {
+                'a' | 'e' | 'i' | 'o' | 'u' => write!(output, "{}hay", value).unwrap(),
+                _ => write!(output, "{}{}ay", &value[1..], first_char).unwrap(),
+            }
         }
     });
     Ok(out.into_series())
@@ -196,5 +199,25 @@ fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series
     let out = ca.apply_to_buffer(|value, output| {
         write!(output, "{}{}", value, kwargs.suffix).unwrap();
     });
+    Ok(out.into_series())
+}
+
+#[polars_expr(output_type=Float64)]
+fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
+    let ca = inputs[0].list()?;
+    let weights = &inputs[1].f64()?;
+
+    let chunks = ca.downcast_iter().map(
+        |arr| -> Option<f64> {
+            let offsets = arr.offsets().as_slice();
+            let values = arr.values().as_ref();
+            let values = values.as_any().downcast_ref::<PrimitiveArray<f64>>().unwrap();
+            let values = values.values().as_slice();
+            // do calculation here... way too complicated.
+            // stop it - just go with pig latin. some course, even if imperfect,
+            // is better than no course at all.
+        },
+    );
+    let out = Float64Chunked::from_chunk_iter(s.name(), chunks);
     Ok(out.into_series())
 }

@@ -81,3 +81,11 @@ class MinimalExamples:
             is_elementwise=True,
             kwargs={"suffix": suffix}
         )
+
+    def weighted_mean(self, weights: IntoExpr) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="weighted_mean",
+            is_elementwise=True,
+            args=[weights],
+        )

@@ -348,6 +348,7 @@ version = "0.1.0"
 dependencies = [
  "jemallocator",
  "polars",
+ "polars-arrow",
  "pyo3",
  "pyo3-polars",
  "serde",

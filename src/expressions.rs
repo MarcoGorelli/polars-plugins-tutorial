@@ -1,5 +1,6 @@
 #![allow(clippy::unused_unit)]
 use serde::Deserialize;
+use polars_arrow::array::Array;
 use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
 // use polars_arrow::array::MutableArray;
@@ -207,17 +208,15 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].list()?;
     let weights = &inputs[1].f64()?;
 
-    let chunks = ca.downcast_iter().map(
-        |arr| -> Option<f64> {
-            let offsets = arr.offsets().as_slice();
-            let values = arr.values().as_ref();
-            let values = values.as_any().downcast_ref::<PrimitiveArray<f64>>().unwrap();
-            let values = values.values().as_slice();
-            // do calculation here... way too complicated.
-            // stop it - just go with pig latin. some course, even if imperfect,
-            // is better than no course at all.
-        },
-    );
-    let out = Float64Chunked::from_chunk_iter(s.name(), chunks);
+    let out: Float64Chunked = ca.apply_amortized_generic(|s| {
+        s.and_then(|s| {
+            let lhs = s.as_ref().f64().unwrap();
+            let out: Float64Chunked = binary_elementwise(lhs, weights, |lhs, rhs| match (lhs, rhs) {
+                (Some(lhs), Some(rhs)) => Some(lhs * rhs),
+                _ => None,
+            });
+            out.sum().map(|num| num / weights.sum().unwrap())
+        })
+    });
     Ok(out.into_series())
 }

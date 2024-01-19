@@ -52,7 +52,7 @@ On the Python side, this'll be similar to `sum_i64`:
 
 On the Rust side, this is where things get a bit scary. I don't know of any existing easy
 convenience function to do this, so I'll provide you with one here:
-out of Series wrappers. 
+
 ```rust
 fn binary_amortized_elementwise_float<'a, F>(
     ca: &'a ListChunked,

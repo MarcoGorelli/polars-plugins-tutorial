@@ -4,18 +4,20 @@ Time to go back to the past. In Section 2, I told you that the
 implementation we had of `abs_i64` wasn't the most efficient one
 you could possibly write. Time to see how to improve it!
 
-Who would win:
+Which algorithm do you think would win?
 
-- only calculating `.abs` for non-null rows
-- calculating `.abs` for all rows, even if they're null
-
-?
+1. row each row:
+    - check if it's null or not
+    - if it's not null, calculate its absolute value
+2. for each row:
+    - calculate its absolute value, even if we don't need it
+      because it's a null row
 
 If you've not come across the concept of branch mispredictions
 before, then the answer may surprise you, because the second
 one is faster here. This is because `.abs` is a very fast
-operation, and the time spent figuring out whether each row
-is valid or not dwarves the actual `.abs` calculation.
+operation, and wasting time checking whether each element is null
+or not actually slows us down!
 
 Here's how you can make `abs_i64` faster:
 
@@ -25,26 +27,6 @@ fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.i64()?;
     let out = ca.apply_values(|x| x.abs());
-    Ok(out.into_series())
-}
-```
-
-or, if you like to things to be really explicit:
-
-```rust
-#[polars_expr(output_type=Int64)]
-fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
-    let s = &inputs[0];
-    let ca = s.i64()?;
-    let chunks = ca
-        .downcast_iter()
-        .map(|arr| arr.values().as_slice())
-        .zip(ca.iter_validities())
-        .map(|(slice, validity)| {
-            let arr: PrimitiveArray<i64> = slice.iter().copied().map(|x| x.abs()).collect_arr();
-            arr.with_validity(validity.cloned())
-        });
-    let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);
     Ok(out.into_series())
 }
 ```

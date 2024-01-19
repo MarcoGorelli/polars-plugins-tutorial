@@ -26,3 +26,6 @@ print(df.with_columns(
     w_mean = pl.col('values').mp.weighted_mean(pl.Series(weights))
 ))
 # Weighted standard deviation: friggin' impossible!
+
+df = pl.DataFrame({'a': ["fearlessly", "littleness", "lovingly", "devoted"]})
+print(df.with_columns(b=pl.col('a').mp.snowball_stem()))

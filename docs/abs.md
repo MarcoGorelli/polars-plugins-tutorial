@@ -29,32 +29,24 @@ definition of `noop`:
 #[polars_expr(output_type=Int64)]
 fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
-    let ca = s.i64()?;
-    // NOTE: there's a faster way of implementing `abs`, which we'll
+    let ca: &Int64Chunked = s.i64()?;
+    // NOTE: there's a faster way of implementing `abs_i64`, which we'll
     // cover in section 7.
-    let chunks = ca.downcast_iter().map(|arr| {
-        arr.into_iter()
-            .map(|opt_v| opt_v.map(|v| v.abs()))
-            .collect()
-    });
-    let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);
+    let out: Int64Chunked = ca.apply(|opt_v: Option<i64>| opt_v.map(|v: i64| v.abs()));
     Ok(out.into_series())
 }
 ```
 
 The general idea here is:
 
-- So we're going to start by iterating over chunks (check section 0) by calling
-  `downcast_iter`.
-- For each chunk, we iterate over the elements in that array (`into_iter`)
-- Each element can either be `Some(i64)`, or `None`. If it's `None`,
-  we return `None`, whereas if it's `Some(i64)`, then we take its
-  absolute value
+- Each element `opt_v` can either be `Some(i64)`, or `None`.
+  If it's `None`, we return `None`, whereas if it's `Some(i64)`,
+  then we return `Some` of the absolute value of the `i64` value.
 
     !!!note
 
-        There's a faster way of implementing `abs`, which you'll learn about
-        in section 7.
+        There's a faster way of implementing `abs_i64`, which you'll learn
+        about in section 7.
 
 - We produce a new ChunkedArray, convert it to Series, and return it.
 
@@ -109,18 +101,13 @@ Paste in the following:
 fn impl_abs_numeric(ca: &Int64Chunked) -> Int64Chunked {
     // NOTE: there's a faster way of implementing `abs`, which we'll
     // cover in section 7.
-    let chunks = ca.downcast_iter().map(|arr| {
-        arr.into_iter()
-            .map(|opt_v| opt_v.map(|v| v.abs()))
-            .collect()
-    });
-    Int64Chunked::from_chunk_iter(ca.name(), chunks)
+    ca.apply(|opt_v: Option<i64>| opt_v.map(|v: i64| v.abs()))
 }
 
 #[polars_expr(output_type=Int64)]
 fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
-    let ca = s.i64()?;
+    let ca: &Int64Chunked = s.i64()?;
     let out = impl_abs_numeric(ca);
     Ok(out.into_series())
 }
@@ -129,9 +116,11 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 Note how it's exactly like `abs_i64`, but `impl_abs_numeric` was
 factored out of the `abs_numeric` function. It's not yet generic,
 we need to do a bit more work.
-You can read about generics
-[here](https://doc.rust-lang.org/book/ch10-00-generics.html) if you're
-not familiar with them.
+The general idea is:
+
+- each `ChunkedArray` is of some Polars Type `T` (e.g. `Int64`);
+- to each Polars Type `T`, there corresponds a Rust native type `T::Native` (e.g. `i64`).
+
 Change `impl_abs_numeric` to:
 
 ```Rust
@@ -142,12 +131,7 @@ where
 {
     // NOTE: there's a faster way of implementing `abs`, which we'll
     // cover in section 7.
-    let chunks = ca.downcast_iter().map(|arr| {
-        arr.into_iter()
-            .map(|opt_v| opt_v.map(|v| v.abs()))
-            .collect()
-    });
-    ChunkedArray::<T>::from_chunk_iter(ca.name(), chunks)
+    ca.apply(|opt_v: Option<T::Native>| opt_v.map(|v: T::Native| v.abs()))
 }
 ```
 Make sure to add

@@ -44,14 +44,18 @@ Add the following to `src/expressions.rs`:
 ```Rust
 #[polars_expr(output_type=Int64)]
 fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
-    let left = inputs[0].i64()?;
-    let right = inputs[1].i64()?;
+    let left: &Int64Chunked = inputs[0].i64()?;
+    let right: &Int64Chunked = inputs[1].i64()?;
     // Note: there's a faster way of summing two columns, see
     // section 7.
-    let out: Int64Chunked = binary_elementwise(left, right, |left, right| match (left, right) {
-        (Some(left), Some(right)) => Some(left + right),
-        _ => None,
-    });
+    let out: Int64Chunked = binary_elementwise(
+        left,
+        right,
+        |left: Option<i64>, right: Option<i64>| match (left, right) {
+            (Some(left), Some(right)) => Some(left + right),
+            _ => None,
+        },
+    );
     Ok(out.into_series())
 }
 ```
@@ -68,7 +72,8 @@ to the top of the `src/expressions.rs` file.
 
 The idea is:
 
-- for each row, if both `left` and `right` are valid, then we sum them;
+- for each row, if both `left` and `right` are valid (i.e. they are both
+  `Some`), then we sum them;
 - if either of them is missing (`None`), then we return `None`.
 
 To try it out, remember to first compile with `maturin develop`
@@ -100,3 +105,5 @@ shape: (3, 3)
 It's widely acknowledged that the best way to learn is by doing.
 
 Can you make `sum_numeric` (a generic version of `sum_i64`)?
+Can you support the case when `left` and `right` are of different
+types, e.g. `i8` plus `i16`?

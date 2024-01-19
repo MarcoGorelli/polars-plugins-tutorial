@@ -1,15 +1,15 @@
 #![allow(clippy::unused_unit)]
-use serde::Deserialize;
-use polars_arrow::array::Array;
 use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
+use polars_arrow::array::Array;
+use serde::Deserialize;
 // use polars_arrow::array::MutableArray;
 // use polars_arrow::array::{MutableUtf8Array, Utf8Array};
 use polars_core::utils::align_chunks_binary;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
-use pyo3_polars::export::polars_core::utils::CustomIterTools;
 use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
+use pyo3_polars::export::polars_core::utils::CustomIterTools;
 // use reverse_geocoder::ReverseGeocoder;
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
@@ -26,13 +26,10 @@ fn noop(inputs: &[Series]) -> PolarsResult<Series> {
 #[polars_expr(output_type=Int64)]
 fn abs_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
-    let ca = s.i64()?;
-    let chunks = ca.downcast_iter().map(|arr| {
-        arr.into_iter()
-            .map(|opt_v| opt_v.map(|v| v.abs()))
-            .collect()
-    });
-    let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);
+    let ca: &Int64Chunked = s.i64()?;
+    // NOTE: there's a faster way of implementing `abs_i64`, which we'll
+    // cover in section 7.
+    let out: Int64Chunked = ca.apply(|opt_v: Option<i64>| opt_v.map(|v: i64| v.abs()));
     Ok(out.into_series())
 }
 
@@ -41,12 +38,7 @@ where
     T: PolarsNumericType,
     T::Native: Signed,
 {
-    let chunks = ca.downcast_iter().map(|arr| {
-        arr.into_iter()
-            .map(|opt_v| opt_v.map(|v| v.abs()))
-            .collect()
-    });
-    ChunkedArray::<T>::from_chunk_iter(ca.name(), chunks)
+    ca.apply(|opt_v: Option<T::Native>| opt_v.map(|v: T::Native| v.abs()))
 }
 
 #[polars_expr(output_type_func=same_output_type)]
@@ -66,19 +58,25 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 
 #[polars_expr(output_type=Int64)]
 fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
-    let left = inputs[0].i64()?;
-    let right = inputs[1].i64()?;
-    let out: Int64Chunked = binary_elementwise(left, right, |left, right| match (left, right) {
-        (Some(left), Some(right)) => Some(left + right),
-        _ => None,
-    });
+    let left: &Int64Chunked = inputs[0].i64()?;
+    let right: &Int64Chunked = inputs[1].i64()?;
+    // Note: there's a faster way of summing two columns, see
+    // section 7.
+    let out: Int64Chunked = binary_elementwise(
+        left,
+        right,
+        |left: Option<i64>, right: Option<i64>| match (left, right) {
+            (Some(left), Some(right)) => Some(left + right),
+            _ => None,
+        },
+    );
     Ok(out.into_series())
 }
 
 #[polars_expr(output_type_func=same_output_type)]
 fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
-    let ca = s.i64()?;
+    let ca: &Int64Chunked = s.i64()?;
     let out: Int64Chunked = ca
         .into_iter()
         .scan(None, |state: &mut Option<i64>, x: Option<i64>| {
@@ -96,44 +94,37 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
             Some(sum)
         })
         .collect_trusted();
-    let out = out.with_name(ca.name());
+    let out: Int64Chunked = out.with_name(ca.name());
     Ok(out.into_series())
 }
 
+use std::borrow::Cow;
 use std::fmt::Write;
 
 #[polars_expr(output_type=String)]
 fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.str()?;
-    let chunks = ca.downcast_iter().map(|arr| {
-        arr.into_iter()
-            .map(|opt_v| {
-                opt_v.map(|value| {
-                    // Not the recommended way to do it,
-                    // see below for a better way!
-                    if let Some(first_char) = value.chars().next() {
-                        format!("{}{}ay", &value[1..], first_char)
-                    } else {
-                        value.to_string()
-                    }
-                })
-            })
-            .collect()
+    let out: StringChunked = ca.apply(|opt_v: Option<&str>| {
+        opt_v.map(|value: &str| {
+            // Not the recommended way to do it,
+            // see below for a better way!
+            if let Some(first_char) = value.chars().next() {
+                Cow::Owned(format!("{}{}ay", &value[1..], first_char))
+            } else {
+                Cow::Owned(value.to_string())
+            }
+        })
     });
-    let out = StringChunked::from_chunk_iter(ca.name(), chunks);
     Ok(out.into_series())
 }
 
 #[polars_expr(output_type=String)]
 fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
-    let ca = inputs[0].str()?;
-    let out: StringChunked = ca.apply_to_buffer(|value, output| {
+    let ca: &StringChunked = inputs[0].str()?;
+    let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
         if let Some(first_char) = value.chars().next() {
-            match first_char.to_ascii_lowercase() {
-                'a' | 'e' | 'i' | 'o' | 'u' => write!(output, "{}hay", value).unwrap(),
-                _ => write!(output, "{}{}ay", &value[1..], first_char).unwrap(),
-            }
+            write!(output, "{}{}ay", &value[1..], first_char).unwrap()
         }
     });
     Ok(out.into_series())
@@ -211,11 +202,15 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let out: Float64Chunked = ca.apply_amortized_generic(|s| {
         s.and_then(|s| {
             let lhs = s.as_ref().f64().unwrap();
-            let out: Float64Chunked = binary_elementwise(lhs, weights, |lhs, rhs| match (lhs, rhs) {
-                (Some(lhs), Some(rhs)) => Some(lhs * rhs),
+            let out: Float64Chunked =
+                binary_elementwise(lhs, weights, |lhs, rhs| match (lhs, rhs) {
+                    (Some(lhs), Some(rhs)) => Some(lhs * rhs),
+                    _ => None,
+                });
+            match (out.sum(), weights.sum()) {
+                (Some(sum), Some(weights_sum)) => Some(sum / weights_sum),
                 _ => None,
-            });
-            out.sum().map(|num| num / weights.sum().unwrap())
+            }
         })
     });
     Ok(out.into_series())

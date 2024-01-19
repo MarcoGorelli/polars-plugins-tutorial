@@ -5,42 +5,45 @@ But we need to address the elephant in the room: strings.
 
 We're going to start by re-implementing a pig-latinnifier.
 This example is already part of the `pyo3-polars` repo examples,
-but we'll tackle it with a different spin here.
+but we'll tackle it with a different spin here by first doing it
+the wrong way 😈.
 
 ## Pig-latinnify - take 1
 
-Let's start by taking our `abs` example, and adapting it to the
+Let's start by doing this the wrong way.
+We'll our `abs` example, and adapt it to the
 string case. We'll follow the same strategy:
 
-- iterate over arrow arrays
-- for each element in each array, compute the output value
+- iterate over arrow arrays;
+- for each element in each array, create a new output value.
 
 Put the following in `src/expressions.rs`:
 
 ```Rust
+use std::borrow::Cow;
+use std::fmt::Write;
+
 #[polars_expr(output_type=String)]
-fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
+fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.str()?;
-    let chunks = ca.downcast_iter().map(|arr| {
-        arr.into_iter()
-            .map(|opt_v| {
-                opt_v.map(|value| {
-                    // Note: this isn't the recommended way to do it
-                    // and is included only for educational purposes.
-                    if let Some(first_char) = value.chars().next() {
-                        format!("{}{}ay", &value[1..], first_char)
-                    } else {
-                        value.to_string()
-                    }
-                })
-            })
-            .collect()
+    let out: StringChunked = ca.apply(|opt_v: Option<&str>| {
+        opt_v.map(|value: &str| {
+            // Not the recommended way to do it,
+            // see below for a better way!
+            if let Some(first_char) = value.chars().next() {
+                Cow::Owned(format!("{}{}ay", &value[1..], first_char))
+            } else {
+                Cow::Owned(value.to_string())
+            }
+        })
     });
-    let out = StringChunked::from_chunk_iter(ca.name(), chunks);
     Ok(out.into_series())
 }
 ```
+If you're not familiar with [clone-on-write](https://doc.rust-lang.org/std/borrow/enum.Cow.html),
+don't worry about it - we're about to see a simpler and better way to do this anyway.
+What I'd like you to focus on is that for every row, we're creating a new `String`.
 
 If you combine this with a Python definition (which you should put
 in `minimal_plugin/__init__.py`):
@@ -78,33 +81,30 @@ shape: (4, 2)
 └───────┴─────────────┘
 ```
 
-This will already be an order of magnitude faster than using `map_elements` and
-a Python lambda function. But you may have noticed that, for every row, we're
-allocating a string, even if we don't need to.
+This will already be an order of magnitude faster than using `map_elements`.
+But as mentioned earlier, we're creating a new string for every single row.
 
 Can we do better?
 
 ## Pig-latinnify - take 2
 
-Yes! In this case, by just writing to already-allocated strings, we can get
-a 4x speedup by just changing `pig_latinnify` to:
+Yes! `StringChunked` has a utility `apply_to_buffer` method which amortises
+the cost of creating new strings for each row by creating a string upfront,
+clearing it, and repeatedly writing to it.
+This gives a 4x speedup! All you need to do is change `pig_latinnify` to:
 
 ```Rust
 #[polars_expr(output_type=String)]
-fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
-    let ca = inputs[0].str()?;
-    let out: StringChunked = ca.apply_to_buffer(|value, output|
+fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
+    let ca: &StringChunked = inputs[0].str()?;
+    let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
         if let Some(first_char) = value.chars().next() {
             write!(output, "{}{}ay", &value[1..], first_char).unwrap()
         }
-    );
+    });
     Ok(out.into_series())
 }
 ```
-Make sure to also add
-```Rust
-use std::fmt::Write;
-```
-to the top of the file.
 
+Simpler, faster, and more memory-efficient.
 Thinking about allocations can really make a difference!

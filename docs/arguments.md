@@ -5,7 +5,7 @@ Say you want to rewrite
 def add_suffix(s, *, suffix):
     return s + suffix
 
-s.map_elements(lambda x: add_suffix(x, suffix='foo'))
+s.map_elements(lambda x: add_suffix(x, suffix='-billy'))
 ```
 as a plugin. How can you do that?
 

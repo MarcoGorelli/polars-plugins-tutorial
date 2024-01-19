@@ -36,17 +36,17 @@ Welcome back! Let's use our newfound scan-superpowers to implement `cum_sum`. He
 #[polars_expr(output_type_func=same_output_type)]
 fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
-    let ca = s.i64()?;
+    let ca: &Int64Chunked = s.i64()?;
     let out: Int64Chunked = ca
         .into_iter()
-        .scan(None, |state: &mut Option<i64>, current: Option<i64>| {
-            let sum = match (*state, current) {
-                (Some(state_inner), Some(current)) => {
-                    *state = Some(state_inner + current);
+        .scan(None, |state: &mut Option<i64>, x: Option<i64>| {
+            let sum = match (*state, x) {
+                (Some(state_inner), Some(x)) => {
+                    *state = Some(state_inner + x);
                     *state
                 }
-                (None, Some(current)) => {
-                    *state = Some(current);
+                (None, Some(x)) => {
+                    *state = Some(x);
                     *state
                 }
                 (_, None) => None,
@@ -54,7 +54,7 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
             Some(sum)
         })
         .collect_trusted();
-    let out = out.with_name(ca.name());
+    let out: Int64Chunked = out.with_name(ca.name());
     Ok(out.into_series())
 }
 ```
@@ -103,7 +103,7 @@ shape: (3, 3)
 
 ## Elementwise, my dear Watson
 
-why was it so important to set `is_elementwise` correctly? Let's see
+Why was it so important to set `is_elementwise` correctly? Let's see
 with an example.
 
 Put the following in `run.py`:
@@ -141,7 +141,7 @@ shape: (6, 3)
 ```
 which looks correct. So, what's the deal with `is_elementwise`?
 
-The deal is that we need it in order for window functions / group-bys
+The deal is that we need it in order for window functions / `group_by`s
 to be correct. Change the last line of `run.py` to
 ```python
 print(df.with_columns(a_cum_sum=pl.col('a').mp.cum_sum().over('b')))

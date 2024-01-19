@@ -81,3 +81,10 @@ class MinimalExamples:
             is_elementwise=True,
             kwargs={"suffix": suffix}
         )
+
+    def snowball_stem(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="snowball_stem",
+            is_elementwise=True,
+        )

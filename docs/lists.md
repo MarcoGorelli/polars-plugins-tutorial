@@ -110,8 +110,34 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
-This version only accepts `Int64` values - see section 2 for how you could make it more
+That's it! This version only accepts `Int64` values - see section 2 for how you could make it more
 generic.
+
+To try it out, we compile with `maturin develop` (or `maturin develop --release` if you're 
+benchmarking), and then we should be able to run `run.py`:
+
+```python
+import polars as pl
+import minimal_plugin  # noqa: F401
+
+df = pl.DataFrame({
+    'values': [[1, 3, 2], [5, 7]],
+    'weights': [[.5, .3, .2], [.1, .9]]
+})
+print(df.with_columns(weighted_mean = pl.col('values').mp.weighted_mean(pl.col('weights'))))
+```
+to see
+```
+shape: (2, 3)
+┌───────────┬─────────────────┬───────────────┐
+│ values    ┆ weights         ┆ weighted_mean │
+│ ---       ┆ ---             ┆ ---           │
+│ list[i64] ┆ list[f64]       ┆ f64           │
+╞═══════════╪═════════════════╪═══════════════╡
+│ [1, 3, 2] ┆ [0.5, 0.3, 0.2] ┆ 1.8           │
+│ [5, 7]    ┆ [0.1, 0.9]      ┆ 6.8           │
+└───────────┴─────────────────┴───────────────┘
+```
 
 ## Gimme challenge
 

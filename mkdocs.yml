@@ -20,6 +20,7 @@ nav:
   - stem.md
   - branch_mispredictions.md
   - arguments.md
+  - lists.md
   - where_to_go.md
 
 plugins:

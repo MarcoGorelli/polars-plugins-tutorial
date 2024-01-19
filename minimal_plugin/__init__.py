@@ -88,3 +88,11 @@ class MinimalExamples:
             symbol="snowball_stem",
             is_elementwise=True,
         )
+
+    def weighted_mean(self, weights: IntoExpr) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="weighted_mean",
+            is_elementwise=True,
+            args=[weights]
+        )

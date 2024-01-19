@@ -200,3 +200,46 @@ fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
     });
     Ok(out.into_series())
 }
+
+fn binary_amortized_elementwise_float<'a, F>(
+    ca: &'a ListChunked,
+    weights: &'a ListChunked,
+    mut f: F,
+) -> Float64Chunked
+where
+    F: FnMut(&Series, &Series) -> Option<f64>,
+{
+    unsafe {
+        ca.amortized_iter()
+            .zip(weights.amortized_iter())
+            .map(|(lhs, rhs)| match (lhs, rhs) {
+                (Some(lhs), Some(rhs)) => f(lhs.as_ref(), rhs.as_ref()),
+                _ => None,
+            })
+            .collect_ca(ca.name())
+    }
+}
+
+#[polars_expr(output_type=Float64)]
+fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
+    let ca = inputs[0].list()?;
+    let weights = &inputs[1].list()?;
+
+    let out = binary_amortized_elementwise_float(ca, weights, |values, weights| {
+        let values = values.i64().unwrap();
+        let weights = weights.f64().unwrap();
+        let out_inner: Float64Chunked = binary_elementwise(
+            values,
+            weights,
+            |lhs: Option<i64>, rhs: Option<f64>| match (lhs, rhs) {
+                (Some(lhs), Some(rhs)) => Some(lhs as f64 * rhs),
+                _ => None,
+            },
+        );
+        match (out_inner.sum(), weights.sum()) {
+            (Some(sum), Some(weights_sum)) => Some(sum / weights_sum),
+            _ => None,
+        }
+    });
+    Ok(out.into_series())
+}

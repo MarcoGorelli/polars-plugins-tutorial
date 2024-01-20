@@ -227,8 +227,10 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let values = inputs[0].list()?;
     let weights = &inputs[1].list()?;
 
-    let out: Float64Chunked =
-        binary_amortized_elementwise(values, weights, |values_inner, weights_inner| {
+    let out: Float64Chunked = binary_amortized_elementwise(
+        values,
+        weights,
+        |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
             let out_inner: Float64Chunked = binary_elementwise(
@@ -243,6 +245,7 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
                 (Some(weighted_sum), Some(weights_sum)) => Some(weighted_sum / weights_sum),
                 _ => None,
             }
-        });
+        },
+    );
     Ok(out.into_series())
 }

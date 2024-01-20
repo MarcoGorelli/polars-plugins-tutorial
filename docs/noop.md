@@ -146,9 +146,9 @@ We'll need to make two files:
 
 ### Defining `noop`'s schema
 
-This only affects lazy execution. If you only ever intend to use your plugin
-in eager mode, then you might not care about it, but this a tutorial, so
-let's take care to get it right.
+Polars needs to know the schema/dtypes resulting from operations to make good
+optimization decisions. The way we tell Polars what to expect from our custom
+function is with the `polars_expr` attribute.
 
 Our beautiful `noop` doesn't change the data type (in fact, it doesn't change anything...)
 so we'll just write a function which returns the same input type:

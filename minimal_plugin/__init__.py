@@ -96,3 +96,11 @@ class MinimalExamples:
             is_elementwise=True,
             args=[weights]
         )
+
+    def shift_struct(self) -> pl.Expr:
+        return self._expr.register_plugin(
+            lib=lib,
+            symbol="shift_struct",
+            is_elementwise=True,
+        )
+

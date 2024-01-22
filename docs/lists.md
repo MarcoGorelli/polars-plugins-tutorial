@@ -41,20 +41,24 @@ as you'll see here, it's not that hard to write a plugin, and it's probably fast
 On the Python side, this'll be similar to `sum_i64`:
 
 ```python
-    def weighted_mean(self, weights: IntoExpr) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="weighted_mean",
-            is_elementwise=True,
-            args=[weights]
-        )
+def weighted_mean(expr: str | pl.Expr, weights: IntoExpr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="weighted_mean",
+        is_elementwise=True,
+        args=[weights]
+    )
 ```
 
-On the Rust side, this is where things get a bit scary. I don't know of any existing easy
-convenience function to do this, so I'll provide you with one here:
+On the Rust side, we're going to start by writing the following
+to `src/utils.rs`:
 
 ```rust
-fn binary_amortized_elementwise<'a, T, K, F>(
+use polars::prelude::*;
+
+pub(crate) fn binary_amortized_elementwise<'a, T, K, F>(
     ca: &'a ListChunked,
     weights: &'a ListChunked,
     mut f: F,
@@ -75,6 +79,12 @@ where
     }
 }
 ```
+and then adding
+```rust
+use crate::utils::binary_amortized_elementwise;
+```
+to the top of `src/expressions.rs`, after the previous imports.
+
 Don't worry about understanding it.
 Some of its details (such as `.as_ref()` to get a `Series` out of an `UnstableSeries`) are arguably
 implementation details. Hopefully a more generic version of this utility like this can be added to
@@ -121,13 +131,13 @@ benchmarking), and then we should be able to run `run.py`:
 
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({
     'values': [[1, 3, 2], [5, 7]],
     'weights': [[.5, .3, .2], [.1, .9]]
 })
-print(df.with_columns(weighted_mean = pl.col('values').mp.weighted_mean(pl.col('weights'))))
+print(df.with_columns(weighted_mean = mp.weighted_mean('values', 'weights')))
 ```
 to see
 ```

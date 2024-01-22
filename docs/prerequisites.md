@@ -20,9 +20,10 @@ for - the compiler will probably help you more than you're expecting.
 
 ## Software
 
-First, you should probably make a new directory for this project.
-Either clone https://github.com/MarcoGorelli/polars-plugins-tutorial,
-or make a new directory.
+The fastest way to get started is to use
+[cookiecutter-polars-plugins](https://github.com/MarcoGorelli/cookiecutter-polars-plugins).
+Otherwise, make a new directory for this project
+or clone https://github.com/MarcoGorelli/polars-plugins-tutorial,
 
 Next, you'll need a Python3.8+ virtual environment with:
 

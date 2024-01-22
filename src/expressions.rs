@@ -7,6 +7,8 @@ use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
 use serde::Deserialize;
 
+use crate::utils::binary_amortized_elementwise;
+
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
     Ok(field.clone())
@@ -97,7 +99,7 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 #[polars_expr(output_type=String)]
-fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
+fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.str()?;
     let out: StringChunked = ca.apply(|opt_v: Option<&str>| {
@@ -110,17 +112,6 @@ fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
                 Cow::Owned(value.to_string())
             }
         })
-    });
-    Ok(out.into_series())
-}
-
-#[polars_expr(output_type=String)]
-fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
-    let ca: &StringChunked = inputs[0].str()?;
-    let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
-        if let Some(first_char) = value.chars().next() {
-            write!(output, "{}{}ay", &value[1..], first_char).unwrap()
-        }
     });
     Ok(out.into_series())
 }
@@ -199,27 +190,6 @@ fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
         write!(output, "{}", en_stemmer.stem(value)).unwrap()
     });
     Ok(out.into_series())
-}
-
-fn binary_amortized_elementwise<'a, T, K, F>(
-    ca: &'a ListChunked,
-    weights: &'a ListChunked,
-    mut f: F,
-) -> ChunkedArray<T>
-where
-    T: PolarsDataType,
-    T::Array: ArrayFromIter<Option<K>>,
-    F: FnMut(&Series, &Series) -> Option<K> + Copy,
-{
-    unsafe {
-        ca.amortized_iter()
-            .zip(weights.amortized_iter())
-            .map(|(lhs, rhs)| match (lhs, rhs) {
-                (Some(lhs), Some(rhs)) => f(lhs.as_ref(), rhs.as_ref()),
-                _ => None,
-            })
-            .collect_ca(ca.name())
-    }
 }
 
 #[polars_expr(output_type=Float64)]

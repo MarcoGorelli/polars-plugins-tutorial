@@ -14,12 +14,14 @@ Let's start with the Python side - this is almost the same as what
 we did for `noop`, we'll just change the names. Please add this to
 `minimal_plugin/__init__.py`, right below the definition of `noop`:
 ```python
-    def abs_i64(self) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="abs_i64",
-            is_elementwise=True,
-        )
+def abs_i64(expr: str | pl.Expr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="abs_i64",
+        is_elementwise=True,
+    )
 ```
 
 Then, please add this to `src/expressions.rs`, right below the Rust
@@ -53,14 +55,14 @@ The general idea here is:
 Let's try this out. Make a Python file `run.py` with the following:
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({
     'a': [1, -1, None],
     'b': [4.1, 5.2, -6.3],
     'c': ['hello', 'everybody!', '!']
 })
-print(df.with_columns(pl.col('a').mp.abs_i64().name.suffix('_abs')))
+print(df.with_columns(mp.abs_i64('a').name.suffix('_abs')))
 ```
 Compile it with `maturin develop` (or `maturin develop --release` if you're benchmarking), and run it with `python run.py`.
 If it outputs
@@ -86,12 +88,14 @@ generalise it a bit, so that it can accept any signed numeric column.
 First, add the following definition to `minimal_plugin/__init__.py`:
 
 ```python
-    def abs_numeric(self) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="abs_numeric",
-            is_elementwise=True,
-        )
+def abs_numeric(expr: str | pl.Expr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="abs_numeric",
+        is_elementwise=True,
+    )
 ```
 
 Then, we'll go back to `src/expressions.rs`.
@@ -162,7 +166,7 @@ instead of only accepting the `Int64` type.
 
 Finally, modify the `print` line of `run.py` to be
 ```python
-print(df.with_columns(pl.col('a', 'b').mp.abs_numeric().name.suffix('_abs')))
+print(df.with_columns(mp.abs_numeric(pl.col('a', 'b')).name.suffix('_abs')))
 ```
 
 Compile with `maturin develop` (or `maturin develop --release`

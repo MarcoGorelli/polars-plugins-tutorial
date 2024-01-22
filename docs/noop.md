@@ -78,17 +78,14 @@ from polars.utils.udfs import _get_shared_lib_location
 lib = _get_shared_lib_location(__file__)
 
 
-@pl.api.register_expr_namespace("mp")
-class MinimalExamples:
-    def __init__(self, expr: pl.Expr):
-        self._expr = expr
-
-    def noop(self) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="noop",
-            is_elementwise=True,
-        )
+def noop(expr: str | pl.Expr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="noop",
+        is_elementwise=True,
+    )
 ```
 Let's go through this line-by-line:
 
@@ -98,9 +95,9 @@ Let's go through this line-by-line:
   functionality: `.list`, `.str`, `.dt`, and more. We'll register one
   more, `.mp`, to which we'll add functionality from our minimal
   plugin;
-- Within the `.mp` namespace, we'll register our amazing do-nothing
-  function `noop`. For now, don't pay attention to `is_elementwise`,
-  we'll get back to that later.
+- We'll define our amazing do-nothing function `noop`.
+  For now, don't pay attention to `is_elementwise`, we'll get back to
+  that later.
 
 ## Let's get Rusty
 
@@ -180,14 +177,14 @@ test it out. We'll just make a toy dataframe and apply `noop`
 to each column!
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({
     'a': [1, 1, None],
     'b': [4.1, 5.2, 6.3],
     'c': ['hello', 'everybody!', '!']
 })
-print(df.with_columns(pl.all().mp.noop().name.suffix('_noop')))
+print(df.with_columns(mp.noop(pl.all()).name.suffix('_noop')))
 ```
 
 Your file tree should look a bit like this:

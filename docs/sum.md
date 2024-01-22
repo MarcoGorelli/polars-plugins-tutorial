@@ -6,9 +6,7 @@ What if we'd like to do something fancier, involving more than one expression?
 Let's try to write an expression which lets us do
 
 ```python
-df.with_columns(
-    pl.col('a').mp.sum_i64(pl.col('b'))
-)
+df.with_columns(mp.sum_i64('a', 'b'))
 ```
 
 ## Take a ride on the Python side
@@ -18,13 +16,15 @@ by using the `args` argument when we register our expression. Add the following 
 `minimal_plugins/__init__.py`:
 
 ```python
-    def sum_i64(self, other: IntoExpr) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="sum_i64",
-            is_elementwise=True,
-            args=[other]
-        )
+def sum_i64(expr: str | pl.Expr, other: IntoExpr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="sum_i64",
+        is_elementwise=True,
+        args=[other]
+    )
 ```
 Make sure to add
 ```python
@@ -81,10 +81,10 @@ To try it out, remember to first compile with `maturin develop`
 if you make a `run.py` file with
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({'a': [1, 5, 2], 'b': [3, None, -1]})
-print(df.with_columns(a_plus_b=pl.col('a').mp.sum_i64(pl.col('b'))))
+print(df.with_columns(a_plus_b=mp.sum_i64('a', 'b')))
 ```
 then `python run.py` should produce
 ```

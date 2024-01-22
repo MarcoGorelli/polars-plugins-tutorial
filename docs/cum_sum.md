@@ -15,12 +15,14 @@ We're going implement `cum_sum`.
 
 Add this to `minimal_plugin/__init__.py`:
 ```python
-    def cum_sum(self) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="cum_sum",
-            is_elementwise=False,
-        )
+def cum_sum(expr: str | pl.Expr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="cum_sum",
+        is_elementwise=False,
+    )
 ```
 Note how, unlike in previous examples, we set `is_elementwise=False`.
 You'll see why this is so important at the end of this page.
@@ -84,7 +86,7 @@ then we can safely use `collect_trusted` and save some precious time.
 Let's compile with `maturin develop` (or `maturin develop --release`
 if you're benchmarking), change the last line of `run.py` to
 ```python
-print(df.with_columns(a_cum_sum=pl.col('a').mp.cum_sum()))
+print(df.with_columns(a_cum_sum=mp.cum_sum('a')))
 ```
 and then run `python run.py`:
 
@@ -109,13 +111,13 @@ with an example.
 Put the following in `run.py`:
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({
     'a': [1, 2, 3, 4, None, 5],
     'b': [1, 1, 1, 2, 2, 2],
 })
-print(df.with_columns(a_cum_sum=pl.col('a').mp.cum_sum()))
+print(df.with_columns(a_cum_sum=mp.cum_sum('a')))
 ```
 
 Then, run `python run.py`.
@@ -144,7 +146,7 @@ which looks correct. So, what's the deal with `is_elementwise`?
 The deal is that we need it in order for window functions / `group_by`s
 to be correct. Change the last line of `run.py` to
 ```python
-print(df.with_columns(a_cum_sum=pl.col('a').mp.cum_sum().over('b')))
+print(df.with_columns(a_cum_sum=mp.cum_sum('a').over('b')))
 ```
 
 Now, we get:

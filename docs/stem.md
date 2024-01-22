@@ -29,20 +29,20 @@ Let's write a function which:
 We'd like to be able to call it as follows:
 
 ```python
-df.with_columns(
-    stemmed_word=pl.col('word').mp.snowball_stem()
-)
+df.with_columns(stemmed_word=mp.snowball_stem('word'))
 ```
 
 On the Python side, let's add the following function to `minimal_plugin/__init__.py`:
 
 ```python
-    def snowball_stem(self) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="snowball_stem",
-            is_elementwise=True,
-        )
+def snowball_stem(expr: str | pl.Expr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="snowball_stem",
+        is_elementwise=True,
+    )
 ```
 
 Then, we can define the function like this in `src/expressions.rs`:
@@ -64,10 +64,10 @@ fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
 Let's try it out! Put the following in `run.py`:
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
-df = pl.DataFrame({'a': ["fearlessly", "littleness", "lovingly", "devoted"]})
-print(df.with_columns(b=pl.col('a').mp.snowball_stem()))
+df = pl.DataFrame({'word': ["fearlessly", "littleness", "lovingly", "devoted"]})
+print(df.with_columns(b=mp.snowball_stem('word')))
 ```
 
 If you then compile with `maturin develop` (or `maturin develop --release`

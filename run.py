@@ -1,11 +1,8 @@
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({
-    'a': [{'a':1, 'b': 2, 'c': 3}]
+    'values': [[1, 3, 2], [5, 7]],
+    'weights': [[.5, .3, .2], [.1, .9]]
 })
-print(df.with_columns(b=pl.col('a').mp.shift_struct()))
-print(df.with_columns(b=pl.col('a').mp.shift_struct())['a'].item())
-print(df.with_columns(b=pl.col('a').mp.shift_struct())['b'].item())
-print(df.lazy().with_columns(b=pl.col('a').mp.shift_struct()).schema)
-print(df.lazy().with_columns(b=pl.col('a').mp.shift_struct()).collect().schema)
+print(df.with_columns(weighted_mean = mp.weighted_mean('values', 'weights')))

@@ -16,13 +16,15 @@ We'll do this with `kwargs`. In `minimal_plugin/__init__.py`, add the
 following:
 
 ```python
-    def add_suffix(self, *, suffix: str) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="add_suffix",
-            is_elementwise=True,
-            kwargs={"suffix": suffix}
-        )
+def add_suffix(expr: str | pl.Expr, *, suffix: str) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="add_suffix",
+        is_elementwise=True,
+        kwargs={"suffix": suffix}
+    )
 ```
 
 In `src/expressions.rs`, we'll then first have to define a struct to hold
@@ -59,10 +61,10 @@ To see it in action, compile with `maturin develop` (or `maturin develop --relea
 benchmarking), and then you should be able to put
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({'a': ['bob', 'billy']})
-print(df.with_columns(pl.col('a').mp.add_suffix(suffix='-billy')))
+print(df.with_columns(mp.add_suffix('a', suffix='-billy')))
 ```
 into `run.py`, and run it to get
 ```

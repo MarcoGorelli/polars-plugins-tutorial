@@ -24,7 +24,7 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 #[polars_expr(output_type=String)]
-fn pig_latinnify_1(inputs: &[Series]) -> PolarsResult<Series> {
+fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.str()?;
     let out: StringChunked = ca.apply(|opt_v: Option<&str>| {
@@ -49,12 +49,14 @@ If you combine this with a Python definition (which you should put
 in `minimal_plugin/__init__.py`):
 
 ```python
-    def pig_latinnify(self) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="pig_latinnify",
-            is_elementwise=True,
-        )
+def pig_latinnify(expr: str | pl.Expr) -> pl.Expr:
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="pig_latinnify",
+        is_elementwise=True,
+    )
 ```
 then you'll be able to pig-latinnify a column of strings! To see it
 in action, compile with `maturin develop` (or `maturin develop --release`
@@ -62,10 +64,10 @@ if you're benchmarking) and put the following in `run.py`:
 
 ```python
 import polars as pl
-import minimal_plugin  # noqa: F401
+import minimal_plugin as mp
 
 df = pl.DataFrame({'a': ["I", "love", "pig", "latin"]})
-print(df.with_columns(a_pig_latin=pl.col('a').mp.pig_latinnify()))
+print(df.with_columns(a_pig_latin=mp.pig_latinnify('a')))
 ```
 ```
 shape: (4, 2)
@@ -95,7 +97,7 @@ This gives a 4x speedup! All you need to do is change `pig_latinnify` to:
 
 ```Rust
 #[polars_expr(output_type=String)]
-fn pig_latinnify_2(inputs: &[Series]) -> PolarsResult<Series> {
+fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &StringChunked = inputs[0].str()?;
     let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
         if let Some(first_char) = value.chars().next() {

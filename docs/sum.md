@@ -67,7 +67,7 @@ to the top of the `src/expressions.rs` file.
 !!! note
 
     There's a faster way of implementing this particular operation,
-    which we'll cover later in the tutorial in section 7.
+    which we'll cover later in the tutorial in [Branch mispredictions].
 
 The idea is:
 
@@ -98,6 +98,8 @@ shape: (3, 3)
 │ 2   ┆ -1   ┆ 1        │
 └─────┴──────┴──────────┘
 ```
+
+  [Branch mispredictions]: ../branch_mispredictions/
 
 ## Get over your exercises
 

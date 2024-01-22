@@ -6,7 +6,7 @@ We'll write a Polars plugin which takes an expression, and returns it exactly
 as it is. Nothing more, nothing less. This will just be an exercise in setting
 everything up!
 
-If you followed the instructions in prerequisites.md, then you working directory
+If you followed the instructions in [Prerequisites], then you working directory
 should look a bit like the following:
 ```
 .
@@ -20,6 +20,8 @@ should look a bit like the following:
     ├── lib.rs
     └── utils.rs
 ```
+
+  [Prerequisites]: ../prerequisites/
 
 ## The Python side
 
@@ -40,10 +42,12 @@ Let's go through this line-by-line:
 
 - when we compile Rust, it generates a Shared Object file.
   The `lib` variable holds its filepath;
-- We'll cover `is_elementwise` in list.md, for now don't pay attention to it;
+- We'll cover `is_elementwise` in [How to not FOLD under pressure], for now don't pay attention to it;
 - We use the utility function `parse_into_expr` to make sure that
   literals will be parsed as column names - this will ensure we'll be
   able to call either `noop('a')` or `noop(pl.col('a'))`.
+
+  [How to not FOLD under pressure]: ../cum_sum/
 
 ## Let's get Rusty
 

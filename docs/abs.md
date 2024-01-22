@@ -47,7 +47,7 @@ The general idea here is:
     !!!note
 
         There's a faster way of implementing `abs_i64`, which you'll learn
-        about in section 7.
+        about in [Branch mispredictions].
 
 - We produce a new ChunkedArray, convert it to Series, and return it.
 
@@ -78,6 +78,8 @@ shape: (3, 4)
 └──────┴──────┴────────────┴───────┘
 ```
 then you did everything correctly!
+
+  [Branch mispredictions]: ../branch_mispredictions/
 
 ## `abs_numeric`
 

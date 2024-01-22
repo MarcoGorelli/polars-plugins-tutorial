@@ -16,9 +16,8 @@ by using the `args` argument when we register our expression. Add the following 
 `minimal_plugins/__init__.py`:
 
 ```python
-def sum_i64(expr: str | pl.Expr, other: IntoExpr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="sum_i64",

@@ -15,9 +15,8 @@ We're going implement `cum_sum`.
 
 Add this to `minimal_plugin/__init__.py`:
 ```python
-def cum_sum(expr: str | pl.Expr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def cum_sum(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="cum_sum",

@@ -16,9 +16,8 @@ We'll do this with `kwargs`. In `minimal_plugin/__init__.py`, add the
 following:
 
 ```python
-def add_suffix(expr: str | pl.Expr, *, suffix: str) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def add_suffix(expr: IntoExpr, *, suffix: str) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="add_suffix",

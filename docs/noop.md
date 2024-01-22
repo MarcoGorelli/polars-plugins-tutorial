@@ -6,81 +6,30 @@ We'll write a Polars plugin which takes an expression, and returns it exactly
 as it is. Nothing more, nothing less. This will just be an exercise in setting
 everything up!
 
-Here are the files we'll need to create:
-
-- `Cargo.toml`: file with Rust dependencies.
-
-    ```toml
-    [package]
-    # Name of the project goes here
-    # Note - it should be the same as the folder which you store your code in!
-    name = "minimal_plugin"
-    version = "0.1.0"
-    edition = "2021"
-
-    [lib]
-    # Name of the project goes here
-    # Note - it should be the same as the folder which you store your code in!
-    name = "minimal_plugin"
-    crate-type= ["cdylib"]
-
-    [dependencies]
-    pyo3 = { version = "0.20.0", features = ["extension-module"] }
-    pyo3-polars = { version = "0.10.0", features = ["derive"] }
-    serde = { version = "1", features = ["derive"] }
-    polars = { version = "0.36.2", default-features = false }
-
-    [target.'cfg(target_os = "linux")'.dependencies]
-    jemallocator = { version = "0.5", features = ["disable_initial_exec_tls"] } 
-    ```
-
-- `pyproject.toml`: file with Python build info.
-    ```toml
-    [build-system]
-    requires = ["maturin>=1.0,<2.0"]
-    build-backend = "maturin"
-
-    [project]
-    name = "minimal_plugin"  # Should match the folder with your code!
-    requires-python = ">=3.8"
-    classifiers = [
-      "Programming Language :: Rust",
-      "Programming Language :: Python :: Implementation :: CPython",
-      "Programming Language :: Python :: Implementation :: PyPy",
-    ]
-    ```
-
-We'll also need to create the following directories:
-
-- `minimal_plugin`: your Python package
-- `src`: directory with your blazingly fast (of course) Rust code.
-
-Your working directory should contain at least the following:
+If you followed the instructions in prerequisites.md, then you working directory
+should look a bit like the following:
 ```
 .
 ├── Cargo.toml
 ├── minimal_plugin
+│   ├── __init__.py
+│   └── utils.py
 ├── pyproject.toml
 └── src
+    ├── expressions.rs
+    ├── lib.rs
+    └── utils.rs
 ```
 
 ## The Python side
 
 Let's start by getting the Python side ready. It won't run until we
 implement the Rust side too, but it's a necessary step.
-Start by making a `minimal_plugin/__init__.py` file with the
-following content:
+Start by adding the following to `minimal_plugin/__init__.py`:
 
-``` py
-import polars as pl
-from polars.utils.udfs import _get_shared_lib_location
-
-lib = _get_shared_lib_location(__file__)
-
-
-def noop(expr: str | pl.Expr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+```python
+def noop(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="noop",
@@ -91,55 +40,29 @@ Let's go through this line-by-line:
 
 - when we compile Rust, it generates a Shared Object file.
   The `lib` variable holds its filepath;
-- Polars has several namespaces which group together related
-  functionality: `.list`, `.str`, `.dt`, and more. We'll register one
-  more, `.mp`, to which we'll add functionality from our minimal
-  plugin;
-- We'll define our amazing do-nothing function `noop`.
-  For now, don't pay attention to `is_elementwise`, we'll get back to
-  that later.
+- We'll cover `is_elementwise` in list.md, for now don't pay attention to it;
+- We use the utility function `parse_into_expr` to make sure that
+  literals will be parsed as column names - this will ensure we'll be
+  able to call either `noop('a')` or `noop(pl.col('a'))`.
 
 ## Let's get Rusty
 
-We'll need to make two files:
+Let's leave `src/lib.rs` as it is, and add the following to `src/expressions.rs`:
 
-- `src/lib.rs`: list any Rust modules we want to use. We'll
-  put `expressions` here (which we define in the next bullet point).
-  
-    ```Rust
-    mod expressions;
+``` rust
+fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = &input_fields[0];
+    Ok(field.clone())
+}
 
-    #[cfg(target_os = "linux")]
-    use jemallocator::Jemalloc;
+#[polars_expr(output_type_func=same_output_type)]
+fn noop(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    Ok(s.clone())
+} 
+```
 
-    #[global_allocator]
-    #[cfg(target_os = "linux")]
-    static ALLOC: Jemalloc = Jemalloc; 
-    ```
-      
-    You can ignore the `jemallocator` part - think of it as some
-    boilerplate in order to get high-performance memory allocation.
-    Your plugin would work just fine without it.
-
-- `src/expressions.rs`: this is where we'll define `noop`
-    ``` rust
-    #![allow(clippy::unused_unit)]
-    use polars::prelude::*;
-    use pyo3_polars::derive::polars_expr;
-
-    fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
-        let field = &input_fields[0];
-        Ok(field.clone())
-    }
-
-    #[polars_expr(output_type_func=same_output_type)]
-    fn noop(inputs: &[Series]) -> PolarsResult<Series> {
-        let s = &inputs[0];
-        Ok(s.clone())
-    } 
-    ```
-
-    There's a lot to cover here so we'll break it down below.
+There's a lot to cover here so we'll break it down below.
 
 ### Defining `noop`'s schema
 
@@ -187,18 +110,20 @@ df = pl.DataFrame({
 print(df.with_columns(mp.noop(pl.all()).name.suffix('_noop')))
 ```
 
-Your file tree should look a bit like this:
+Your working directory should now look a bit like this:
 
 ```
 .
 ├── Cargo.toml
 ├── minimal_plugin
-│   └── __init__.py
+│   ├── __init__.py
+│   └── utils.py
 ├── pyproject.toml
 ├── run.py
-├── src
-│   ├── expressions.rs
-│   └── lib.rs
+└── src
+    ├── expressions.rs
+    ├── lib.rs
+    └── utils.rs
 ```
 
 Let's compile! Please run `maturin develop` (or `maturin develop --release` if benchmarking).

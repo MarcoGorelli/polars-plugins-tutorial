@@ -180,17 +180,17 @@ fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series
     Ok(out.into_series())
 }
 
-use rust_stemmers::{Algorithm, Stemmer};
+// use rust_stemmers::{Algorithm, Stemmer};
 
-#[polars_expr(output_type=String)]
-fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
-    let ca: &StringChunked = inputs[0].str()?;
-    let en_stemmer = Stemmer::create(Algorithm::English);
-    let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
-        write!(output, "{}", en_stemmer.stem(value)).unwrap()
-    });
-    Ok(out.into_series())
-}
+// #[polars_expr(output_type=String)]
+// fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
+//     let ca: &StringChunked = inputs[0].str()?;
+//     let en_stemmer = Stemmer::create(Algorithm::English);
+//     let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
+//         write!(output, "{}", en_stemmer.stem(value)).unwrap()
+//     });
+//     Ok(out.into_series())
+// }
 
 #[polars_expr(output_type=Float64)]
 fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {

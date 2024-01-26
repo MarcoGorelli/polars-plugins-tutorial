@@ -1,8 +1,10 @@
 import polars as pl
 from polars.utils.udfs import _get_shared_lib_location
 from polars.type_aliases import IntoExpr
+from minimal_plugin.utils import parse_into_expr
 
 lib = _get_shared_lib_location(__file__)
+
 
 
 def noop(expr: IntoExpr) -> pl.Expr:

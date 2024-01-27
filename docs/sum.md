@@ -25,11 +25,6 @@ def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
         args=[other]
     )
 ```
-Make sure to add
-```python
-from polars.type_aliases import IntoExpr
-```
-to the top of the file too.
 
 ## I’ve got 1100011 problems but binary ain't one
 

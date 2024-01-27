@@ -65,11 +65,11 @@ Series: '' [i64]
 ```
 you may be tempted to conclude that it contains three values: `[null, 1, 2]`.
 
-However, if you print out `s._get_buffer(0)` and `s._get_buffer(1)`, you'll see
+However, if you print out `s._get_buffers()`, you'll see
 something different:
 
-- `s._get_buffer(0)`: `[42, 44, 45]`. These are the _values_.
-- `s._get_buffer(1)`: `[False, True, True]`. These are the _validities_.
+- `s._get_buffers()["values"]`: `[42, 44, 45]`. These are the _values_.
+- `s._get_buffers()["validity"]`: `[False, True, True]`. These are the _validities_.
 
 So we don't really have integers and `null` mixed together into a single array - we
 have a pair of arrays, one holding values and another one holding booleans indicating

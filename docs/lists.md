@@ -51,45 +51,20 @@ def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
     )
 ```
 
-On the Rust side, we're going to start by writing the following
-to `src/utils.rs`:
+On the Rust side, we'll make use of `binary_amortized_elementwise`, which you
+can find in `src/utils.rs` (if you followed the instructions in [prerequisites]).
+Don't worry about understanding it.
+Some of its details (such as `.as_ref()` to get a `Series` out of an `UnstableSeries`) are
+optimizations with some gotchas - unless you really know what you're doing, I'd suggest
+just using `binary_amortized_elementwise` directly. Hopefully a utility like this
+can be added to Polars itself, so that plugin authors won't need to worry about it.
 
-```rust
-use polars::prelude::*;
-
-pub(crate) fn binary_amortized_elementwise<'a, T, K, F>(
-    ca: &'a ListChunked,
-    weights: &'a ListChunked,
-    mut f: F,
-) -> ChunkedArray<T>
-where
-    T: PolarsDataType,
-    T::Array: ArrayFromIter<Option<K>>,
-    F: FnMut(&Series, &Series) -> Option<K> + Copy,
-{
-    unsafe {
-        ca.amortized_iter()
-            .zip(weights.amortized_iter())
-            .map(|(lhs, rhs)| match (lhs, rhs) {
-                (Some(lhs), Some(rhs)) => f(lhs.as_ref(), rhs.as_ref()),
-                _ => None,
-            })
-            .collect_ca(ca.name())
-    }
-}
-```
-and then adding
+To use it, just add
 ```rust
 use crate::utils::binary_amortized_elementwise;
 ```
 to the top of `src/expressions.rs`, after the previous imports.
 
-Don't worry about understanding it.
-Some of its details (such as `.as_ref()` to get a `Series` out of an `UnstableSeries`) are arguably
-implementation details. Hopefully a more generic version of this utility like this can be added to
-Polars itself, so that plugin authors won't need to worry about it.
-
-Let's concern ourselves with just using it to accomplish our task!
 We just need to write a function which accepts two `Series`, computes their dot product, and then
 divides by the sum of the weights:
 
@@ -154,6 +129,6 @@ shape: (2, 3)
 └───────────┴─────────────────┴───────────────┘
 ```
 
-## Gimme challenge
+## Gimme ~~chocolate~~ challenge
 
 Could you implement a weighted standard deviation calculator?

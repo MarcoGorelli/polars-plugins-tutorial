@@ -105,13 +105,10 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
-            let out_inner: Float64Chunked = binary_elementwise(
+            let out_inner: Float64Chunked = binary_elementwise_values(
                 values_inner,
                 weights_inner,
-                |opt_value: Option<i64>, opt_weight: Option<f64>| match (opt_value, opt_weight) {
-                    (Some(value), Some(weight)) => Some(value as f64 * weight),
-                    _ => None,
-                },
+                |value: i64, weight: f64| value as f64 * weight,
             );
             match (out_inner.sum(), weights_inner.sum()) {
                 (Some(weighted_sum), Some(weights_sum)) => Some(weighted_sum / weights_sum),
@@ -122,8 +119,14 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
-That's it! This version only accepts `Int64` values - see section 2 for how you could make it more
-generic.
+Make sure to also add
+
+```rust
+use polars::prelude::arity::binary_elementwise_values;
+```
+
+to the top of the file. That's it! This version only accepts `Int64` values - see section 2 for
+how you could make it more generic.
 
 To try it out, we compile with `maturin develop` (or `maturin develop --release` if you're 
 benchmarking), and then we should be able to run `run.py`:

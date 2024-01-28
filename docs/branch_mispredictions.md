@@ -6,7 +6,7 @@ you could possibly write. Time to see how to improve it!
 
 Which algorithm do you think would win?
 
-1. row each row:
+1. for each row:
     - check if it's null or not
     - if it's not null, calculate its absolute value
 2. for each row:

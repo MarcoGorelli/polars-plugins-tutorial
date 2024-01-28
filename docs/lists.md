@@ -52,7 +52,7 @@ def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
 ```
 
 On the Rust side, we'll make use of `binary_amortized_elementwise`, which you
-can find in `src/utils.rs` (if you followed the instructions in [prerequisites]).
+can find in `src/utils.rs` (if you followed the instructions in [Prerequisites]).
 Don't worry about understanding it.
 Some of its details (such as `.as_ref()` to get a `Series` out of an `UnstableSeries`) are
 optimizations with some gotchas - unless you really know what you're doing, I'd suggest
@@ -128,6 +128,8 @@ shape: (2, 3)
 │ [5, 7]    ┆ [0.1, 0.9]      ┆ 6.8           │
 └───────────┴─────────────────┴───────────────┘
 ```
+
+  [Prerequisites]: ../prerequisites/
 
 ## Gimme ~~chocolate~~ challenge
 

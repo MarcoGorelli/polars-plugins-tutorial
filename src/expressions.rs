@@ -225,6 +225,7 @@ fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     match field.data_type() {
         DataType::Struct(fields) => {
             let mut field_0 = fields[0].clone();
+            let name = field_0.name().clone();
             field_0.set_name(fields[fields.len() - 1].name().clone());
             let mut fields = fields[1..]
                 .iter()
@@ -232,7 +233,7 @@ fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
                 .map(|(fld, name)| Field::new(name.name(), fld.data_type().clone()))
                 .collect::<Vec<_>>();
             fields.push(field_0);
-            Ok(Field::new("foo", DataType::Struct(fields)))
+            Ok(Field::new(&name, DataType::Struct(fields)))
         }
         _ => unreachable!(),
     }

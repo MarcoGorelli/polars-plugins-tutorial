@@ -208,6 +208,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glob"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
+
+[[package]]
 name = "hashbrown"
 version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -449,6 +455,9 @@ checksum = "e43795c49010cb851d45227caa17769e83760e21d260ba6285c563b754e1652f"
 dependencies = [
  "getrandom",
  "polars-core",
+ "polars-io",
+ "polars-lazy",
+ "polars-ops",
  "version_check",
 ]
 
@@ -504,6 +513,7 @@ dependencies = [
  "ahash",
  "bitflags 2.4.1",
  "bytemuck",
+ "chrono",
  "either",
  "hashbrown",
  "indexmap",
@@ -517,6 +527,7 @@ dependencies = [
  "rand",
  "rand_distr",
  "rayon",
+ "regex",
  "smartstring",
  "thiserror",
  "version_check",
@@ -529,6 +540,7 @@ version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50f2435b02d1ba36d8c1f6a722cad04e4c0b2705a3112c5706e6960d405d7798"
 dependencies = [
+ "regex",
  "simdutf8",
  "thiserror",
 ]
@@ -564,6 +576,27 @@ dependencies = [
  "rayon",
  "regex",
  "smartstring",
+]
+
+[[package]]
+name = "polars-lazy"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d83343e413346f048f3a5ad07c0ea4b5d0bada701a482878213142970b0ddff8"
+dependencies = [
+ "ahash",
+ "bitflags 2.4.1",
+ "glob",
+ "once_cell",
+ "polars-arrow",
+ "polars-core",
+ "polars-io",
+ "polars-ops",
+ "polars-plan",
+ "polars-utils",
+ "rayon",
+ "smartstring",
+ "version_check",
 ]
 
 [[package]]

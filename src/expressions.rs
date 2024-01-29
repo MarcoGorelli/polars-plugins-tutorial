@@ -216,3 +216,44 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     );
     Ok(out.into_series())
 }
+
+fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = &input_fields[0];
+    match field.data_type() {
+        DataType::Struct(fields) => {
+            let mut field_0 = fields[0].clone();
+            let name = field_0.name().clone();
+            field_0.set_name(fields[fields.len() - 1].name().clone());
+            let mut fields = fields[1..]
+                .iter()
+                .zip(fields[0..fields.len() - 1].iter())
+                .map(|(fld, name)| Field::new(name.name(), fld.data_type().clone()))
+                .collect::<Vec<_>>();
+            fields.push(field_0);
+            Ok(Field::new(&name, DataType::Struct(fields)))
+        }
+        _ => unreachable!(),
+    }
+}
+
+#[polars_expr(output_type_func=shifted_struct)]
+fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
+    let struct_ = inputs[0].struct_()?;
+    let fields = struct_.fields();
+    if fields.is_empty() {
+        return Ok(inputs[0].clone());
+    }
+    let mut field_0 = fields[0].clone();
+    field_0.rename(fields[fields.len() - 1].name());
+    let mut fields = fields[1..]
+        .iter()
+        .zip(fields[..fields.len() - 1].iter())
+        .map(|(s, name)| {
+            let mut s = s.clone();
+            s.rename(name.name());
+            s
+        })
+        .collect::<Vec<_>>();
+    fields.push(field_0);
+    StructChunked::new(struct_.name(), &fields).map(|ca| ca.into_series())
+}

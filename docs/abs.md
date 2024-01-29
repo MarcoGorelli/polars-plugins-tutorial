@@ -14,9 +14,8 @@ Let's start with the Python side - this is almost the same as what
 we did for `noop`, we'll just change the names. Please add this to
 `minimal_plugin/__init__.py`, right below the definition of `noop`:
 ```python
-def abs_i64(expr: str | pl.Expr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def abs_i64(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="abs_i64",
@@ -48,7 +47,7 @@ The general idea here is:
     !!!note
 
         There's a faster way of implementing `abs_i64`, which you'll learn
-        about in section 7.
+        about in [Branch mispredictions].
 
 - We produce a new ChunkedArray, convert it to Series, and return it.
 
@@ -80,6 +79,8 @@ shape: (3, 4)
 ```
 then you did everything correctly!
 
+  [Branch mispredictions]: ../branch_mispredictions/
+
 ## `abs_numeric`
 
 The code above unfortunately only supports `Int64` columns. Let's try to
@@ -88,9 +89,8 @@ generalise it a bit, so that it can accept any signed numeric column.
 First, add the following definition to `minimal_plugin/__init__.py`:
 
 ```python
-def abs_numeric(expr: str | pl.Expr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def abs_numeric(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="abs_numeric",

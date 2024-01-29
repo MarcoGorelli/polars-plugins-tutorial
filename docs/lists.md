@@ -41,9 +41,8 @@ as you'll see here, it's not that hard to write a plugin, and it's probably fast
 On the Python side, this'll be similar to `sum_i64`:
 
 ```python
-def weighted_mean(expr: str | pl.Expr, weights: IntoExpr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="weighted_mean",
@@ -52,45 +51,20 @@ def weighted_mean(expr: str | pl.Expr, weights: IntoExpr) -> pl.Expr:
     )
 ```
 
-On the Rust side, we're going to start by writing the following
-to `src/utils.rs`:
+On the Rust side, we'll make use of `binary_amortized_elementwise`, which you
+can find in `src/utils.rs` (if you followed the instructions in [Prerequisites]).
+Don't worry about understanding it.
+Some of its details (such as `.as_ref()` to get a `Series` out of an `UnstableSeries`) are
+optimizations with some gotchas - unless you really know what you're doing, I'd suggest
+just using `binary_amortized_elementwise` directly. Hopefully a utility like this
+can be added to Polars itself, so that plugin authors won't need to worry about it.
 
-```rust
-use polars::prelude::*;
-
-pub(crate) fn binary_amortized_elementwise<'a, T, K, F>(
-    ca: &'a ListChunked,
-    weights: &'a ListChunked,
-    mut f: F,
-) -> ChunkedArray<T>
-where
-    T: PolarsDataType,
-    T::Array: ArrayFromIter<Option<K>>,
-    F: FnMut(&Series, &Series) -> Option<K> + Copy,
-{
-    unsafe {
-        ca.amortized_iter()
-            .zip(weights.amortized_iter())
-            .map(|(lhs, rhs)| match (lhs, rhs) {
-                (Some(lhs), Some(rhs)) => f(lhs.as_ref(), rhs.as_ref()),
-                _ => None,
-            })
-            .collect_ca(ca.name())
-    }
-}
-```
-and then adding
+To use it, just add
 ```rust
 use crate::utils::binary_amortized_elementwise;
 ```
 to the top of `src/expressions.rs`, after the previous imports.
 
-Don't worry about understanding it.
-Some of its details (such as `.as_ref()` to get a `Series` out of an `UnstableSeries`) are arguably
-implementation details. Hopefully a more generic version of this utility like this can be added to
-Polars itself, so that plugin authors won't need to worry about it.
-
-Let's concern ourselves with just using it to accomplish our task!
 We just need to write a function which accepts two `Series`, computes their dot product, and then
 divides by the sum of the weights:
 
@@ -106,13 +80,10 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
-            let out_inner: Float64Chunked = binary_elementwise(
+            let out_inner: Float64Chunked = binary_elementwise_values(
                 values_inner,
                 weights_inner,
-                |opt_value: Option<i64>, opt_weight: Option<f64>| match (opt_value, opt_weight) {
-                    (Some(value), Some(weight)) => Some(value as f64 * weight),
-                    _ => None,
-                },
+                |value: i64, weight: f64| value as f64 * weight,
             );
             match (out_inner.sum(), weights_inner.sum()) {
                 (Some(weighted_sum), Some(weights_sum)) => Some(weighted_sum / weights_sum),
@@ -123,8 +94,14 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
-That's it! This version only accepts `Int64` values - see section 2 for how you could make it more
-generic.
+Make sure to also add
+
+```rust
+use polars::prelude::arity::binary_elementwise_values;
+```
+
+to the top of the file. That's it! This version only accepts `Int64` values - see section 2 for
+how you could make it more generic.
 
 To try it out, we compile with `maturin develop` (or `maturin develop --release` if you're 
 benchmarking), and then we should be able to run `run.py`:
@@ -152,6 +129,8 @@ shape: (2, 3)
 └───────────┴─────────────────┴───────────────┘
 ```
 
-## Gimme challenge
+  [Prerequisites]: ../prerequisites/
+
+## Gimme ~~chocolate~~ challenge
 
 Could you implement a weighted standard deviation calculator?

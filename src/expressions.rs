@@ -1,5 +1,5 @@
 #![allow(clippy::unused_unit)]
-use polars::prelude::arity::binary_elementwise;
+use polars::prelude::arity::{binary_elementwise, binary_elementwise_values};
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
@@ -180,17 +180,17 @@ fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series
     Ok(out.into_series())
 }
 
-use rust_stemmers::{Algorithm, Stemmer};
+// use rust_stemmers::{Algorithm, Stemmer};
 
-#[polars_expr(output_type=String)]
-fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
-    let ca: &StringChunked = inputs[0].str()?;
-    let en_stemmer = Stemmer::create(Algorithm::English);
-    let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
-        write!(output, "{}", en_stemmer.stem(value)).unwrap()
-    });
-    Ok(out.into_series())
-}
+// #[polars_expr(output_type=String)]
+// fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
+//     let ca: &StringChunked = inputs[0].str()?;
+//     let en_stemmer = Stemmer::create(Algorithm::English);
+//     let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
+//         write!(output, "{}", en_stemmer.stem(value)).unwrap()
+//     });
+//     Ok(out.into_series())
+// }
 
 #[polars_expr(output_type=Float64)]
 fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
@@ -203,13 +203,10 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
-            let out_inner: Float64Chunked = binary_elementwise(
+            let out_inner: Float64Chunked = binary_elementwise_values(
                 values_inner,
                 weights_inner,
-                |opt_value: Option<i64>, opt_weight: Option<f64>| match (opt_value, opt_weight) {
-                    (Some(value), Some(weight)) => Some(value as f64 * weight),
-                    _ => None,
-                },
+                |value: i64, weight: f64| value as f64 * weight,
             );
             match (out_inner.sum(), weights_inner.sum()) {
                 (Some(weighted_sum), Some(weights_sum)) => Some(weighted_sum / weights_sum),

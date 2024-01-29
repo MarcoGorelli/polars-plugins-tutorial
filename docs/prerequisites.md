@@ -20,20 +20,28 @@ for - the compiler will probably help you more than you're expecting.
 
 ## Software
 
-The fastest way to get started is to use
-[cookiecutter-polars-plugins](https://github.com/MarcoGorelli/cookiecutter-polars-plugins).
-Otherwise, make a new directory for this project
-or clone https://github.com/MarcoGorelli/polars-plugins-tutorial,
+To get started, please [install cookiecutter](https://cookiecutter.readthedocs.io/en/stable/README.html#installation).
 
-Next, you'll need a Python3.8+ virtual environment with:
+Then, from your home directory (or wherever you store your Python projects) please run
+```
+cookiecutter https://github.com/MarcoGorelli/cookiecutter-polars-plugins
+```
+When prompted, please enter (let's suppose your name is "Maja Anima", but replace that
+with your preferred name):
+```
+[1/3] plugin_name (Polars Cookiecutter): Minimal Plugin
+[2/3] project_slug (polars_minimal_plugin):
+[3/3] author (anonymous): Maja Anima
+```
+This will create a folder call `minimal_plugin`.
+Please navigate to it with `cd minimal_plugin`.
+
+Next, [create a Python3.8+ virtual environment](https://docs.python.org/3/library/venv.html), and install:
 
 - `polars>=0.20.0`
-- `maturin>=1.4.0` (but older versions _may_ work too)
+- `maturin>=1.4.0`
 
-installed.
-
-You'll also need to have Rust installed, see [rustup](https://rustup.rs/) for
-how to do that.
+Finally, you'll also need to [install Rust](https://rustup.rs/).
 
 That's it! However, you are highly encouraged to also install
 [rust-analyzer](https://rust-analyzer.github.io/manual.html) if you want to
@@ -57,11 +65,11 @@ Series: '' [i64]
 ```
 you may be tempted to conclude that it contains three values: `[null, 1, 2]`.
 
-However, if you print out `s._get_buffer(0)` and `s._get_buffer(1)`, you'll see
+However, if you print out `s._get_buffers()`, you'll see
 something different:
 
-- `s._get_buffer(0)`: `[42, 44, 45]`. These are the _values_.
-- `s._get_buffer(1)`: `[False, True, True]`. These are the _validities_.
+- `s._get_buffers()["values"]`: `[42, 44, 45]`. These are the _values_.
+- `s._get_buffers()["validity"]`: `[False, True, True]`. These are the _validities_.
 
 So we don't really have integers and `null` mixed together into a single array - we
 have a pair of arrays, one holding values and another one holding booleans indicating

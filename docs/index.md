@@ -17,3 +17,8 @@ that you can address at least 99% of inefficient `map_elements` tasks.
 **Nelson Griffiths**, Engineering & ML Lead at Double River Investments | Core Maintainer Functime
 
 > this was an awesome intro. I am no rust expert, though I have written a few plugins. And I learned quite a bit from this! Having my team read it now as well. Thanks for putting this together. I think more content like this for people who don’t know how to write optimal polars code on the rust side will be really useful for people like me who want to work on plugins!
+
+**Barak David**, Software Engineer
+
+> Amazing tutorial! I just created nltk plugin, and experienced X50 speedup!
+

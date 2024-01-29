@@ -49,9 +49,8 @@ If you combine this with a Python definition (which you should put
 in `minimal_plugin/__init__.py`):
 
 ```python
-def pig_latinnify(expr: str | pl.Expr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def pig_latinnify(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="pig_latinnify",

@@ -16,9 +16,8 @@ by using the `args` argument when we register our expression. Add the following 
 `minimal_plugins/__init__.py`:
 
 ```python
-def sum_i64(expr: str | pl.Expr, other: IntoExpr) -> pl.Expr:
-    if isinstance(expr, str):
-        expr = pl.col(expr)
+def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
     return expr.register_plugin(
         lib=lib,
         symbol="sum_i64",
@@ -26,11 +25,6 @@ def sum_i64(expr: str | pl.Expr, other: IntoExpr) -> pl.Expr:
         args=[other]
     )
 ```
-Make sure to add
-```python
-from polars.type_aliases import IntoExpr
-```
-to the top of the file too.
 
 ## I’ve got 1100011 problems but binary ain't one
 
@@ -68,7 +62,7 @@ to the top of the `src/expressions.rs` file.
 !!! note
 
     There's a faster way of implementing this particular operation,
-    which we'll cover later in the tutorial in section 7.
+    which we'll cover later in the tutorial in [Branch mispredictions].
 
 The idea is:
 
@@ -99,6 +93,8 @@ shape: (3, 3)
 │ 2   ┆ -1   ┆ 1        │
 └─────┴──────┴──────────┘
 ```
+
+  [Branch mispredictions]: ../branch_mispredictions/
 
 ## Get over your exercises
 

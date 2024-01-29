@@ -12,12 +12,13 @@ the input was `{'a': 1, 'b': 2., 'c': '3'}`, then the output will be
 On the Python side, usual business:
 
 ```python
-    def shift_struct(self) -> pl.Expr:
-        return self._expr.register_plugin(
-            lib=lib,
-            symbol="shift_struct",
-            is_elementwise=True,
-        )
+def shift_struct(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
+    return expr.register_plugin(
+        lib=lib,
+        symbol="shift_struct",
+        is_elementwise=True,
+    )
 ```
 
 On the Roost side, we need to start by activating the necessary

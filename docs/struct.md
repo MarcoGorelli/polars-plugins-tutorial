@@ -20,7 +20,14 @@ On the Python side, usual business:
         )
 ```
 
-On the Roost side, let's start with getting the schema right.
+On the Roost side, we need to start by activating the necessary
+feature - in `Cargo.toml`, please make this change:
+```diff
+-polars = { version = "0.37.0", default-features = false }
++polars = { version = "0.37.0", features=["dtype-struct"], default-features = false }
+```
+
+Then, we need to get the schema right.
 ```Rust
 fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -73,6 +80,45 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
 ```
 
 Let's try this out. Put the following in `run.py`:
+
 ```python
+import polars as pl
+import minimal_plugin as mp
+
+df = pl.DataFrame(
+    {
+        "a": [1, 3, 8],
+        "b": [2.0, 3.1, 2.5],
+        "c": ["3", "7", "3"],
+    }
+).select(abc=pl.struct("a", "b", "c"))
+print(df.with_columns(abc_shifted=mp.shift_struct("abc")))
+```
+
+Compile with `maturin develop` (or `maturin develop --release` if you're
+benchmarking), and if you run `python run.py` you'll see:
 
 ```
+shape: (3, 2)
+┌─────────────┬─────────────┐
+│ abc         ┆ abc_shifted │
+│ ---         ┆ ---         │
+│ struct[3]   ┆ struct[3]   │
+╞═════════════╪═════════════╡
+│ {1,2.0,"3"} ┆ {2.0,"3",1} │
+│ {3,3.1,"7"} ┆ {3.1,"7",3} │
+│ {8,2.5,"3"} ┆ {2.5,"3",8} │
+└─────────────┴─────────────┘
+```
+
+The values look right - but is the schema?
+Let's take a look
+```
+import pprint
+pprint.pprint(df.with_columns(abc_shifted=mp.shift_struct("abc")).schema)
+```
+```
+OrderedDict([('abc', Struct({'a': Int64, 'b': Float64, 'c': String})),
+             ('abc_shifted', Struct({'a': Float64, 'b': String, 'c': Int64}))])
+```
+Looks correct!

@@ -21,6 +21,7 @@ nav:
   - branch_mispredictions.md
   - arguments.md
   - lists.md
+  - struct.md
   - where_to_go.md
 
 plugins:

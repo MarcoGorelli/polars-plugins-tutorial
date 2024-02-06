@@ -63,7 +63,7 @@ Series: '' [i64]
         45
 ]
 ```
-you may be tempted to conclude that it contains three values: `[null, 1, 2]`.
+you may be tempted to conclude that it contains three values: `[null, 44, 45]`.
 
 However, if you print out `s._get_buffers()`, you'll see
 something different:

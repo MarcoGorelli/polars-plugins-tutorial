@@ -6,7 +6,7 @@ We'll write a Polars plugin which takes an expression, and returns it exactly
 as it is. Nothing more, nothing less. This will just be an exercise in setting
 everything up!
 
-If you followed the instructions in [Prerequisites], then you working directory
+If you followed the instructions in [Prerequisites], then your working directory
 should look a bit like the following:
 ```
 .

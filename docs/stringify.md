@@ -11,7 +11,7 @@ the wrong way 😈.
 ## Pig-latinnify - take 1
 
 Let's start by doing this the wrong way.
-We'll our `abs` example, and adapt it to the
+We'll use our `abs` example, and adapt it to the
 string case. We'll follow the same strategy:
 
 - iterate over arrow arrays;

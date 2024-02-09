@@ -6,7 +6,7 @@ which will work on numeric data.
 We'll do this in phases:
 
 - `abs_i64` will take the absolute value of each row of an `Int64` column
-- `abs_numeric` will the absolute value of each row in any numeric column
+- `abs_numeric` will take the absolute value of each row in any numeric column
 
 ## `abs_i64`
 

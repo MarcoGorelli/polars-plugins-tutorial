@@ -9,7 +9,7 @@ Let's do something (completely) different - instead of working with
 each row in isolation, we'll calculate a quantity which depends on the
 rows which precede it.
 
-We're going implement `cum_sum`.
+We're going to implement `cum_sum`.
 
 ## Python side
 

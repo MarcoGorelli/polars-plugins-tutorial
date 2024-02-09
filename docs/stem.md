@@ -85,7 +85,7 @@ shape: (4, 2)
 └────────────┴──────────┘
 ```
 
-In this example, we took on an extra dependency, which increases
+In this example, we took on an extra dependency, which increased
 the size of the package. By using plugins, we have a way of accessing
 extra functionality without having to bloat up the size of the main
 Polars install too much!

@@ -97,3 +97,10 @@ def shift_struct(expr: IntoExpr) -> pl.Expr:
         symbol="shift_struct",
         is_elementwise=True,
     )
+
+
+def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
+    lat = parse_into_expr(lat)
+    return lat.register_plugin(
+        lib=lib, symbol="reverse_geocode", is_elementwise=True, args=[long]
+    )

@@ -7,7 +7,7 @@ use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
 use serde::Deserialize;
 
-use crate::utils::binary_amortized_elementwise;
+use crate::utils::{binary_amortized_elementwise, binary_apply_to_buffer_generic};
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -251,4 +251,19 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         .collect::<Vec<_>>();
     fields.push(field_0);
     StructChunked::new(struct_.name(), &fields).map(|ca| ca.into_series())
+}
+
+use reverse_geocoder::ReverseGeocoder;
+
+#[polars_expr(output_type=String)]
+fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
+    let lhs = inputs[0].f64()?;
+    let rhs = inputs[1].f64()?;
+    let geocoder = ReverseGeocoder::new();
+
+    let out = binary_apply_to_buffer_generic(lhs, rhs, |lhs_val, rhs_val| {
+        let search_result = geocoder.search((lhs_val, rhs_val));
+        search_result.record.name.to_string()
+    });
+    Ok(out.into_series())
 }

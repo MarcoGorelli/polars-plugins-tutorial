@@ -42,6 +42,9 @@ In [How to STRING something together], we learned how to use `StringChunked.appl
 to run an elementwise function on a String column. Does Polars have a binary version of that one
 which allows us to start from any data type?
 
+  [Prerequisites]: ../prerequisites/
+  [How to STRING something together]: ../stringify/
+
 Unfortunately, not. But if you followed the Cookiecutter instrustions in [Prerequisites], then
 you'll find a such function in `src/utils.rs`! Please go to that file and uncomment the
 function `binary_apply_to_buffer_generic`.
@@ -102,5 +105,3 @@ in the output!
 
 Great, now in our hypothetical scenario, you're probably still lost, but
 at least you know which city you're closest to.
-
-  [How to STRING something together]: ../stringify/

@@ -22,6 +22,7 @@ nav:
   - arguments.md
   - lists.md
   - struct.md
+  - lost_in_space.md
   - where_to_go.md
 
 plugins:

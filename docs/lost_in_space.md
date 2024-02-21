@@ -43,9 +43,35 @@ to run an elementwise function on a String column. Does Polars have a binary ver
 which allows us to start from any data type?
 
 Unfortunately, not. But if you followed the Cookiecutter instrustions in [Prerequisites], then
-you'll find a such function in `src/utils.rs`!
+you'll find a such function in `src/utils.rs`! Please go to that file and uncomment the
+function `binary_apply_to_buffer_generic`.
 
-  [How to STRING something together]: ../stringify/
+We can then define out reverse geocoder plugin function. On the Python side,
+in `minimal_plugin/__init__.py`:
+```python
+def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
+    lat = parse_into_expr(lat)
+    return lat.register_plugin(
+        lib=lib, symbol="reverse_geocode", is_elementwise=True, args=[long]
+    )
+```
+and on the Rust side, in `src/expressions.rs`:
+```Rust
+use reverse_geocoder::ReverseGeocoder;
+
+#[polars_expr(output_type=String)]
+fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
+    let lhs = inputs[0].f64()?;
+    let rhs = inputs[1].f64()?;
+    let geocoder = ReverseGeocoder::new();
+
+    let out = binary_apply_to_buffer_generic(lhs, rhs, |lhs_val, rhs_val| {
+        let search_result = geocoder.search((lhs_val, rhs_val));
+        search_result.record.name.to_string()
+    });
+    Ok(out.into_series())
+}
+```
 
 To run it, put the following in `run.py`:
 ```python
@@ -73,3 +99,8 @@ shape: (3, 3)
 └─────────┴───────────┴───────────────────┘
 ```
 in the output!
+
+Great, now in our hypothetical scenario, you're probably still lost, but
+at least you know which city you're closest to.
+
+  [How to STRING something together]: ../stringify/

@@ -76,19 +76,14 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &Int64Chunked = s.i64()?;
     let out: Int64Chunked = ca
         .into_iter()
-        .scan(None, |state: &mut Option<i64>, x: Option<i64>| {
-            let sum = match (*state, x) {
-                (Some(state_inner), Some(x)) => {
-                    *state = Some(state_inner + x);
-                    *state
-                }
-                (None, Some(x)) => {
-                    *state = Some(x);
-                    *state
-                }
-                (_, None) => None,
-            };
-            Some(sum)
+        .scan(0_i64, |state: &mut i64, x: Option<i64>| {
+            match x {
+                Some(x) => {
+                    *state += x;
+                    Some(Some(*state))
+                },
+                None => Some(None),
+            }
         })
         .collect_trusted();
     let out: Int64Chunked = out.with_name(ca.name());

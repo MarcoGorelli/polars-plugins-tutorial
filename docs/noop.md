@@ -42,12 +42,12 @@ Let's go through this line-by-line:
 
 - when we compile Rust, it generates a Shared Object file.
   The `lib` variable holds its filepath;
-- We'll cover `is_elementwise` in [How to not FOLD under pressure], for now don't pay attention to it;
+- We'll cover `is_elementwise` in [Yes we SCAN], for now don't pay attention to it;
 - We use the utility function `parse_into_expr` to make sure that
   literals will be parsed as column names - this will ensure we'll be
   able to call either `noop('a')` or `noop(pl.col('a'))`.
 
-  [How to not FOLD under pressure]: ../cum_sum/
+  [Yes we SCAN]: ../cum_sum/
 
 ## Let's get Rusty
 

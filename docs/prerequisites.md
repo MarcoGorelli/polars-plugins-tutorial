@@ -7,10 +7,17 @@
 How much Rust do you need to know to write your own Polars plugin? Less than
 you think.
 
-If you pick up [The Rust Programming Language](https://doc.rust-lang.org/book/)
-and can make it through the first 10 chapters, then I postulate
-that you'll have enough knowledge to replace the vast majority of
-inefficient `map_elements` calls.
+I'd suggest starting out with the [Rustlings](https://github.com/rust-lang/rustlings)
+course, which provides some fun and interactive exercises designed to make you familiar
+with the language. I'd suggest starting the following sections:
+
+- 00 intro
+- 01 variables
+- 02 functions
+- 03 if
+- 05 vecs
+- 12 options
+- 13 error handling
 
 You'll also need basic Python knowledge: classes, decorators, and functions.
 

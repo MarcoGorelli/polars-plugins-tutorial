@@ -6,7 +6,7 @@ Here are the steps you should follow:
 2. ???
 3. profit
 
-This section deals with step 1.
+This section deals with step 1, and assumes your project live on GitHub.
 
 ## Set up trusted publishing
 
@@ -168,4 +168,6 @@ Then, on PyPI, you'll want to (note: this is taken almost verbatim from [PyPA](h
 1. Go to https://pypi.org/manage/account/publishing/.
 2. Fill in the name you wish to publish your new PyPI project under (the name value in your pyproject.toml), the GitHub repository owner’s name (org or user), and repository name, and the name of the release workflow file under the .github/ folder, see Creating a workflow definition. Finally, add the name of the GitHub Environment (pypi) we’re going set up under your repository. Register the trusted publisher.
 
-Finally, if you make a commit and tag it, and then push, then a release should be triggered!
+Finally, if you make a commit and tag it, and then push, then a release should be triggered! It will then be
+available for install across different platforms, which would be really hard (impossible?) to do if you were building
+the wheel manually and uploading to PyPI yourself.

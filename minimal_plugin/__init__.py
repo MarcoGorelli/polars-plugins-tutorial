@@ -104,3 +104,10 @@ def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
     return lat.register_plugin(
         lib=lib, symbol="reverse_geocode", is_elementwise=True, args=[long]
     )
+
+
+def non_zero_indices(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
+    return expr.register_plugin(
+        lib=lib, symbol="non_zero_indices", is_elementwise=True
+    )

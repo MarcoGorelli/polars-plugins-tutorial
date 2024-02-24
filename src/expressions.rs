@@ -287,3 +287,29 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
     let out: StringChunked = unsafe { ChunkedArray::from_chunks(lhs.name(), chunks) };
     Ok(out.into_series())
 }
+
+fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = Field::new(input_fields[0].name(), DataType::List(Box::new(IDX_DTYPE)));
+    Ok(field.clone())
+}
+
+#[polars_expr(output_type_func=list_idx_dtype)]
+fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
+    let ca = inputs[0].list()?;
+
+    let out: ListChunked = ca.apply_amortized(|s| {
+        let s: &Series = s.as_ref();
+        let ca: &Int64Chunked = s.i64().unwrap();
+        let mut out: Vec<Option<u32>> = Vec::with_capacity(ca.len());
+        for (idx, element) in ca.into_iter().enumerate() {
+            match element {
+                Some(0) => (),
+                Some(_) => out.push(Some(idx as IdxSize)),
+                None => (),
+            }
+        }
+        let out: IdxCa = out.into_iter().collect_ca("");
+        out.into_series()
+    });
+    Ok(out.into_series())
+}

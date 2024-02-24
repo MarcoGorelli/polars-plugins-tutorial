@@ -17,3 +17,8 @@ df = pl.DataFrame({
 })
 print(df.with_columns(city=mp.reverse_geocode('lat', 'lon')))
 
+pl.Config().set_fmt_table_cell_list_len(10)
+
+df = pl.DataFrame({'dense': [[0, 9], [8, 6, 0, 9], None, [3, 3]]})
+print(df)
+print(df.with_columns(indices=mp.non_zero_indices('dense')))

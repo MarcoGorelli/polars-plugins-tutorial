@@ -79,3 +79,44 @@ Polars dtype.
   [Weighted-mean watchers]: ../lists/
   [How to STRING something together]: ../stringify/
 
+To finish this off, the Python side will be a bog-standard:
+
+```python
+def non_zero_indices(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
+    return expr.register_plugin(
+        lib=lib, symbol="non_zero_indices", is_elementwise=True
+    )
+```
+
+If we then make `run.py` with
+
+```python
+import polars as pl
+import minimal_plugin as mp
+
+pl.Config().set_fmt_table_cell_list_len(10)
+
+df = pl.DataFrame({'dense': [[0, 9], [8, 6, 0, 9], None, [3, 3]]})
+print(df)
+print(df.with_columns(indices=mp.non_zero_indices('dense')))
+```
+and compile with `maturin develop` (or `maturin develop --release` if you're benchmarking!)
+then we'll see
+
+```
+shape: (4, 2)
+┌──────────────┬───────────┐
+│ dense        ┆ indices   │
+│ ---          ┆ ---       │
+│ list[i64]    ┆ list[u32] │
+╞══════════════╪═══════════╡
+│ [0, 9]       ┆ [1]       │
+│ [8, 6, 0, 9] ┆ [0, 1, 3] │
+│ null         ┆ null      │
+│ [3, 3]       ┆ [0, 1]    │
+└──────────────┴───────────┘
+```
+
+Yay, it worked! And not only that, but it's about 1.5x as fast as the `list.eval` solution
+noted above!

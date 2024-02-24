@@ -65,4 +65,13 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
 `apply_amortized` is a bit like the `apply_to_buffer` function we used in `pig_latinnify`,
 in that it makes a big allocation upfront to amortize the allocation costs.
 
+Something new in this example is:
+
+- `IdxSize`
+- `IdxCa`
+- `IDX_DTYPE`
+
+These are either `u32` or `u64`, depending on your platform, and are what Polars generally uses
+for counting-related operations.
+
   [Lists at last]: ../lists/

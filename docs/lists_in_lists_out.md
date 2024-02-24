@@ -1,6 +1,6 @@
-# 12. Bob the (list) builder
+# 9.1 Lists in, lists out
 
-Chapter 9 ([Lists at last]) was fun. Let's do it all over again!
+Chapter 9.0 ([Weighted-mean watchers]) was fun. Let's do it all over again!
 
 Or rather, let's do another list operation. We're going to start with
 a dataframe such as
@@ -18,7 +18,7 @@ shape: (4, 1)
 │ [3, 3]       │
 └──────────────┘
 ```
-and we're going to try to count the indices which are non-zero.
+and we're going to try to count the indices which are non-zero. -->
 
 !!! note
 
@@ -62,8 +62,9 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
-`apply_amortized` is a bit like the `apply_to_buffer` function we used in `pig_latinnify`,
-in that it makes a big allocation upfront to amortize the allocation costs.
+`apply_amortized` is a bit like the `apply_to_buffer` function we used in [How to STRING something together],
+in that it makes a big allocation upfront to amortize the allocation costs. Think of it as a list version
+of `apply_values`, where each element is itself a `Series`.
 
 Something new in this example is:
 
@@ -71,7 +72,10 @@ Something new in this example is:
 - `IdxCa`
 - `IDX_DTYPE`
 
-These are either `u32` or `u64`, depending on your platform, and are what Polars generally uses
-for counting-related operations.
+`IdxSize` is either `u32` or `u64`, depending on your platform, and are what Polars generally uses
+for counting-related operations. `IdxCa` is the associated `ChunkedArray`, and `IDX_DTYPE` the associated
+Polars dtype.
 
-  [Lists at last]: ../lists/
+  [Weighted-mean watchers]: ../lists/
+  [How to STRING something together]: ../stringify/
+

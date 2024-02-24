@@ -1,4 +1,4 @@
-# 9. Lists at last
+# 9.0 Weighted-mean watchers
 
 According to [one YouTube talk](https://youtu.be/u5mIDz5ldmI?si=4AtnyyAwdVk33bYu),
 the `list` namespace is one of Polars' main selling points.

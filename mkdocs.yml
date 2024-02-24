@@ -20,7 +20,9 @@ nav:
   - stem.md
   - branch_mispredictions.md
   - arguments.md
-  - lists.md
+  - 9. Lists at last:
+    - lists.md
+    - lists_in_lists_out.md
   - struct.md
   - lost_in_space.md
   - publishing.md

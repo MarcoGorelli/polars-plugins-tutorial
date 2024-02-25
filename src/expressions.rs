@@ -251,42 +251,42 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
     StructChunked::new(struct_.name(), &fields).map(|ca| ca.into_series())
 }
 
-use polars_arrow::array::MutablePlString;
-use polars_core::utils::align_chunks_binary;
-use reverse_geocoder::ReverseGeocoder;
+// use polars_arrow::array::MutablePlString;
+// use polars_core::utils::align_chunks_binary;
+// use reverse_geocoder::ReverseGeocoder;
 
-#[polars_expr(output_type=String)]
-fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
-    let lhs = inputs[0].f64()?;
-    let rhs = inputs[1].f64()?;
-    let geocoder = ReverseGeocoder::new();
+// #[polars_expr(output_type=String)]
+// fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
+//     let lhs = inputs[0].f64()?;
+//     let rhs = inputs[1].f64()?;
+//     let geocoder = ReverseGeocoder::new();
 
-    let (lhs, rhs) = align_chunks_binary(lhs, rhs);
-    let chunks = lhs
-        .downcast_iter()
-        .zip(rhs.downcast_iter())
-        .map(|(lhs_arr, rhs_arr)| {
-            let mut buf = String::new();
-            let mut mutarr = MutablePlString::with_capacity(lhs_arr.len());
+//     let (lhs, rhs) = align_chunks_binary(lhs, rhs);
+//     let chunks = lhs
+//         .downcast_iter()
+//         .zip(rhs.downcast_iter())
+//         .map(|(lhs_arr, rhs_arr)| {
+//             let mut buf = String::new();
+//             let mut mutarr = MutablePlString::with_capacity(lhs_arr.len());
 
-            for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
-                match (lhs_opt_val, rhs_opt_val) {
-                    (Some(lhs_val), Some(rhs_val)) => {
-                        let res = &geocoder.search((*lhs_val, *rhs_val)).record.name;
-                        buf.clear();
-                        write!(buf, "{res}").unwrap();
-                        mutarr.push(Some(&buf))
-                    }
-                    _ => mutarr.push_null(),
-                }
-            }
+//             for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
+//                 match (lhs_opt_val, rhs_opt_val) {
+//                     (Some(lhs_val), Some(rhs_val)) => {
+//                         let res = &geocoder.search((*lhs_val, *rhs_val)).record.name;
+//                         buf.clear();
+//                         write!(buf, "{res}").unwrap();
+//                         mutarr.push(Some(&buf))
+//                     }
+//                     _ => mutarr.push_null(),
+//                 }
+//             }
 
-            mutarr.freeze().boxed()
-        })
-        .collect();
-    let out: StringChunked = unsafe { ChunkedArray::from_chunks(lhs.name(), chunks) };
-    Ok(out.into_series())
-}
+//             mutarr.freeze().boxed()
+//         })
+//         .collect();
+//     let out: StringChunked = unsafe { ChunkedArray::from_chunks(lhs.name(), chunks) };
+//     Ok(out.into_series())
+// }
 
 fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = Field::new(input_fields[0].name(), DataType::List(Box::new(IDX_DTYPE)));
@@ -311,5 +311,37 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
         let out: IdxCa = out.into_iter().collect_ca("");
         out.into_series()
     });
+    Ok(out.into_series())
+}
+
+#[polars_expr(output_type_func=list_idx_dtype)]
+fn distance_to_previous_larger_value(inputs: &[Series]) -> PolarsResult<Series> {
+    let ca = inputs[0].i64()?;
+    let mut current_maximum: i64 = 0;
+    let out: IdxCa = ca
+        .into_iter()
+        .enumerate()
+        .map(|(idx, opt_val)| {
+            if idx == 0 {
+                return None;
+            }
+            opt_val.map(|var| {
+                if var > current_maximum {
+                    current_maximum = var;
+                    return 0;
+                }
+                let mut distance: IdxSize = 0;
+                for i in (0..idx).rev() {
+                    if let Some(prev_val) = ca.get(i) {
+                        distance += 1;
+                        if prev_val > var {
+                            break
+                        }
+                    }
+                }
+                distance
+            })
+        })
+        .collect();
     Ok(out.into_series())
 }

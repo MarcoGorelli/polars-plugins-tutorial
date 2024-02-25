@@ -111,3 +111,9 @@ def non_zero_indices(expr: IntoExpr) -> pl.Expr:
     return expr.register_plugin(
         lib=lib, symbol="non_zero_indices", is_elementwise=True
     )
+
+def distance_to_previous_greater_value(expr: IntoExpr) -> pl.Expr:
+    expr = parse_into_expr(expr)
+    return expr.register_plugin(
+        lib=lib, symbol="distance_to_previous_larger_value", is_elementwise=False
+    )

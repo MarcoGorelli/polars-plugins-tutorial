@@ -317,30 +317,26 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
 #[polars_expr(output_type_func=list_idx_dtype)]
 fn distance_to_previous_larger_value(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].i64()?;
-    let mut current_maximum: i64 = 0;
-    let out: IdxCa = ca
+    let mut idx: Vec<Option<i32>> = Vec::with_capacity(ca.len());
+    let out: Int32Chunked = ca
         .into_iter()
         .enumerate()
-        .map(|(idx, opt_val)| {
-            if idx == 0 {
-                return None;
+        .map(|(i, opt_val)| {
+            let i_curr = i;
+            if i == 0 {
+                idx.push(None);
+                return None
             }
-            opt_val.map(|var| {
-                if var > current_maximum {
-                    current_maximum = var;
-                    return 0;
-                }
-                let mut distance: IdxSize = 0;
-                for i in (0..idx).rev() {
-                    if let Some(prev_val) = ca.get(i) {
-                        distance += 1;
-                        if prev_val > var {
-                            break
-                        }
-                    }
-                }
-                distance
-            })
+            let mut i = Some((i as i32) - 1);
+            while i.is_some() && opt_val.unwrap() >= ca.get(i.unwrap() as usize).unwrap() {
+                i = idx[i.unwrap() as usize];
+            }
+            if i.is_none() {
+                idx.push(None);
+                return Some(0)
+            }
+            idx.push(i);
+            Some(i_curr as i32 - i.unwrap())
         })
         .collect();
     Ok(out.into_series())

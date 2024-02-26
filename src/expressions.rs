@@ -300,15 +300,12 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
     let out: ListChunked = ca.apply_amortized(|s| {
         let s: &Series = s.as_ref();
         let ca: &Int64Chunked = s.i64().unwrap();
-        let mut out: Vec<Option<u32>> = Vec::with_capacity(ca.len());
-        for (idx, element) in ca.into_iter().enumerate() {
-            match element {
-                Some(0) => (),
-                Some(_) => out.push(Some(idx as IdxSize)),
-                None => (),
-            }
-        }
-        let out: IdxCa = out.into_iter().collect_ca("");
+        let out: IdxCa = ca
+            .into_iter()
+            .enumerate()
+            .filter(|(_idx, opt_val)| opt_val != &Some(0))
+            .map(|(idx, _opt_val)| Some(idx as IdxSize))
+            .collect_ca("");
         out.into_series()
     });
     Ok(out.into_series())

@@ -66,25 +66,22 @@ use reverse_geocoder::ReverseGeocoder;
 
 #[polars_expr(output_type=String)]
 fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
-    let lhs = inputs[0].f64()?;
-    let rhs = inputs[1].f64()?;
+    let lat = inputs[0].f64()?;
+    let lon = inputs[1].f64()?;
     let geocoder = ReverseGeocoder::new();
 
-    let (lhs, rhs) = align_chunks_binary(lhs, rhs);
+    let (lhs, rhs) = align_chunks_binary(lat, lon);
     let chunks = lhs
         .downcast_iter()
         .zip(rhs.downcast_iter())
-        .map(|(lhs_arr, rhs_arr)| {
-            let mut buf = String::new();
-            let mut mutarr = MutablePlString::with_capacity(lhs_arr.len());
+        .map(|(lat_arr, lon_arr)| {
+            let mut mutarr = MutablePlString::with_capacity(lat_arr.len());
 
-            for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
-                match (lhs_opt_val, rhs_opt_val) {
-                    (Some(lhs_val), Some(rhs_val)) => {
-                        let res = &geocoder.search((*lhs_val, *rhs_val)).record.name;
-                        buf.clear();
-                        write!(buf, "{res}").unwrap();
-                        mutarr.push(Some(&buf))
+            for (lat_opt_val, lon_opt_val) in lat_arr.iter().zip(lon_arr.iter()) {
+                match (lat_opt_val, lon_opt_val) {
+                    (Some(lat_val), Some(lon_val)) => {
+                        let res = &geocoder.search((*lat_val, *lon_val)).record.name;
+                        mutarr.push(Some(res))
                     }
                     _ => mutarr.push_null(),
                 }
@@ -93,7 +90,7 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
             mutarr.freeze().boxed()
         })
         .collect();
-    let out: StringChunked = unsafe { ChunkedArray::from_chunks(lhs.name(), chunks) };
+    let out: StringChunked = unsafe { ChunkedArray::from_chunks("placeholder", chunks) };
     Ok(out.into_series())
 }
 ```

@@ -13,11 +13,11 @@ crate-type= ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.20.0", features = ["extension-module"] }
-pyo3-polars = { version = "0.11.1", features = ["derive"] }
+pyo3-polars = { version = "0.12.0", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
-polars = { version = "0.37.0", features=["dtype-struct"], default-features = false }
-polars-arrow = { version = "0.37.0", default-features = false }
-polars-core = { version = "0.37.0", default-features = false }
+polars = { version = "0.38.1", features=["dtype-struct"], default-features = false }
+polars-arrow = { version = "0.38.1", default-features = false }
+polars-core = { version = "0.38.1", default-features = false }
 reverse_geocoder = "4.0.0"
 # rust-stemmers = "1.2.0"
 

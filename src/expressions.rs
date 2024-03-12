@@ -1,5 +1,5 @@
 #![allow(clippy::unused_unit)]
-use polars::prelude::arity::{binary_elementwise, binary_elementwise_values};
+use polars::prelude::arity::binary_elementwise;
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
@@ -196,15 +196,18 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
-            let out_inner: Float64Chunked = binary_elementwise_values(
-                values_inner,
-                weights_inner,
-                |value: i64, weight: f64| value as f64 * weight,
-            );
-            match (out_inner.sum(), weights_inner.sum()) {
-                (Some(weighted_sum), Some(weights_sum)) => Some(weighted_sum / weights_sum),
-                _ => None,
-            }
+            let mut numerator: f64 = 0.;
+            let mut denominator: f64 = 0.;
+            values_inner
+                .iter()
+                .zip(weights_inner.iter())
+                .for_each(|(v, w)| {
+                    if let (Some(v), Some(w)) = (v, w) {
+                        numerator += v as f64 * w;
+                        denominator += w;
+                    }
+                });
+            Some(numerator / denominator)
         },
     );
     Ok(out.into_series())
@@ -309,4 +312,13 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
         out.into_series()
     });
     Ok(out.into_series())
+}
+
+#[polars_expr(output_type=Int64)]
+fn vertical_sum(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca: &Int64Chunked = s.i64()?;
+    let out: Option<i64> = ca.iter().sum();
+    let out = vec![out.unwrap()];
+    Ok(Int64Chunked::from_vec("", out).into_series())
 }

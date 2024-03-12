@@ -1,6 +1,12 @@
 import polars as pl
 import minimal_plugin as mp
 
-df = pl.DataFrame({'value':[[9, 1, 0], [1, 2], [3, 0, 1, 2]]})
 
-print(df.with_columns(mp.non_zero_indices('value'))) 
+import polars as pl
+import minimal_plugin as mp
+
+df = pl.DataFrame({
+    'values': [[1, 3, 2], [5, 7], []],
+    'weights': [[.5, .3, .2], [.1, .9], []]
+})
+print(df.with_columns(weighted_mean = mp.weighted_mean('values', 'weights')))

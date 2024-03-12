@@ -80,27 +80,25 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
-            let out_inner: Float64Chunked = binary_elementwise_values(
-                values_inner,
-                weights_inner,
-                |value: i64, weight: f64| value as f64 * weight,
-            );
-            match (out_inner.sum(), weights_inner.sum()) {
-                (Some(weighted_sum), Some(weights_sum)) => Some(weighted_sum / weights_sum),
-                _ => None,
-            }
+            let mut numerator: f64 = 0.;
+            let mut denominator: f64 = 0.;
+            values_inner
+                .iter()
+                .zip(weights_inner.iter())
+                .for_each(|(v, w)| {
+                    if let (Some(v), Some(w)) = (v, w) {
+                        numerator += v as f64 * w;
+                        denominator += w;
+                    }
+                });
+            Some(numerator / denominator)
         },
     );
     Ok(out.into_series())
 }
 ```
-Make sure to also add
 
-```rust
-use polars::prelude::arity::binary_elementwise_values;
-```
-
-to the top of the file. That's it! This version only accepts `Int64` values - see section 2 for
+That's it! This version only accepts `Int64` values - see section 2 for
 how you could make it more generic.
 
 To try it out, we compile with `maturin develop` (or `maturin develop --release` if you're 

@@ -314,11 +314,18 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
-#[polars_expr(output_type=Int64)]
-fn vertical_sum(inputs: &[Series]) -> PolarsResult<Series> {
-    let s = &inputs[0];
-    let ca: &Int64Chunked = s.i64()?;
-    let out: Option<i64> = ca.iter().sum();
-    let out = vec![out.unwrap()];
-    Ok(Int64Chunked::from_vec("", out).into_series())
+#[polars_expr(output_type=Float64)]
+fn vertical_weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
+    let values = &inputs[0].f64()?;
+    let weights = &inputs[0].f64()?;
+    let mut numerator = 0.;
+    let mut denominator = 0.;
+    values.iter().zip(weights.iter()).for_each(|(v, w)| {
+        if let (Some(v), Some(w)) = (v, w) {
+            numerator += v * w;
+            denominator += w;
+        }
+    });
+    let result = numerator / denominator;
+    Ok(Series::new("", vec![result]))
 }

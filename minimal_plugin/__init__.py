@@ -112,8 +112,8 @@ def non_zero_indices(expr: IntoExpr) -> pl.Expr:
         lib=lib, symbol="non_zero_indices", is_elementwise=True
     )
 
-def vertical_sum(expr: IntoExpr) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
-        lib=lib, symbol="vertical_sum", is_elementwise=False, returns_scalar=True, changes_length=True,
+def vertical_weighted_mean(values: IntoExpr, weights: IntoExpr) -> pl.Expr:
+    values = parse_into_expr(values)
+    return values.register_plugin(
+        lib=lib, symbol="vertical_weighted_mean", is_elementwise=False, returns_scalar=True, args=[weights],
     )

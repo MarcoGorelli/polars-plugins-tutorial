@@ -26,6 +26,7 @@ nav:
   - struct.md
   - lost_in_space.md
   - publishing.md
+  - aggregate.md
   - where_to_go.md
 
 plugins:

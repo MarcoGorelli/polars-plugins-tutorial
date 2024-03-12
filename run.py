@@ -10,3 +10,10 @@ df = pl.DataFrame({
     'weights': [[.5, .3, .2], [.1, .9], []]
 })
 print(df.with_columns(weighted_mean = mp.weighted_mean('values', 'weights')))
+
+df = pl.DataFrame({
+    'values': [1., 3, 2, 5, 7],
+    'weights': [.5, .3, .2, .1, .9],
+    'group': ['a', 'a', 'a', 'b', 'b'],
+})
+print(df.group_by('group').agg(weighted_mean = mp.vertical_weighted_mean('values', 'weights')))

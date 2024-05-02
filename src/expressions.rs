@@ -102,7 +102,7 @@ fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
             if let Some(first_char) = value.chars().next() {
                 Cow::Owned(format!("{}{}ay", &value[1..], first_char))
             } else {
-                Cow::Owned(value.to_string())
+                Cow::Borrowed(value)
             }
         })
     });

@@ -4,6 +4,7 @@ SHELL=/bin/bash
 venv:  ## Set up virtual environment
 	python3 -m venv venv
 	venv/bin/pip install -r requirements.txt
+	venv/bin/pip install -r requirements-dev.txt
 
 install: venv
 	unset CONDA_PREFIX && \
@@ -23,3 +24,6 @@ run: install
 
 run-release: install-release
 	source venv/bin/activate && python run.py
+
+test: venv
+	source venv/bin/activate && pytest test_plugin.py

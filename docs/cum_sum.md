@@ -39,7 +39,7 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca: &Int64Chunked = s.i64()?;
     let out: Int64Chunked = ca
-        .into_iter()
+        .iter()
         .scan(0_i64, |state: &mut i64, x: Option<i64>| {
             match x {
                 Some(x) => {

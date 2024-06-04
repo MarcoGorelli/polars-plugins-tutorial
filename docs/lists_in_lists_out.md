@@ -80,9 +80,8 @@ To finish this off, the Python side will be a bog-standard:
 
 ```python
 def non_zero_indices(expr: IntoExpr) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
-        lib=lib, symbol="non_zero_indices", is_elementwise=True
+    return register_plugin(
+        args=[expr], lib=lib, symbol="non_zero_indices", is_elementwise=True
     )
 ```
 

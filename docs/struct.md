@@ -13,8 +13,8 @@ On the Python side, usual business:
 
 ```python
 def shift_struct(expr: IntoExpr) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
+    return register_plugin(
+        args=[expr],
         lib=lib,
         symbol="shift_struct",
         is_elementwise=True,

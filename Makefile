@@ -4,6 +4,7 @@ SHELL=/bin/bash
 venv:  ## Set up virtual environment
 	python3 -m venv venv
 	venv/bin/pip install -r requirements.txt
+	venv/bin/pip install -r requirements-dev.txt
 
 install: venv
 	unset CONDA_PREFIX && \
@@ -15,9 +16,14 @@ install-release: venv
 
 pre-commit: venv
 	cargo fmt --all --manifest-path Cargo.toml && cargo clippy --all-features --manifest-path Cargo.toml
+	venv/bin/python -m ruff format minimal_plugin test_plugin.py
+	venv/bin/python -m ruff check minimal_plugin test_plugin.py
 
 run: install
 	source venv/bin/activate && python run.py
 
 run-release: install-release
 	source venv/bin/activate && python run.py
+
+test: venv
+	source venv/bin/activate && pytest test_plugin.py

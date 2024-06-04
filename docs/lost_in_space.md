@@ -51,9 +51,8 @@ We'll start easy by dealing with the Python side. Add the following to `minimal_
 
 ```python
 def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
-    lat = parse_into_expr(lat)
-    return lat.register_plugin(
-        lib=lib, symbol="reverse_geocode", is_elementwise=True, args=[long]
+    return register_plugin(
+        args=[lat, long], lib=lib, symbol="reverse_geocode", is_elementwise=True
     )
 ```
 

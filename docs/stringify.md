@@ -50,8 +50,8 @@ in `minimal_plugin/__init__.py`):
 
 ```python
 def pig_latinnify(expr: IntoExpr) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
+    return register_plugin(
+        args=[expr],
         lib=lib,
         symbol="pig_latinnify",
         is_elementwise=True,

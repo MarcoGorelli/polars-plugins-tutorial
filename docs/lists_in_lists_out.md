@@ -49,7 +49,7 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
         let s: &Series = s.as_ref();
         let ca: &Int64Chunked = s.i64().unwrap();
         let out: IdxCa = ca
-            .into_iter()
+            .iter()
             .enumerate()
             .filter(|(_idx, opt_val)| opt_val != &Some(0))
             .map(|(idx, _opt_val)| Some(idx as IdxSize))

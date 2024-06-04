@@ -36,7 +36,7 @@ To keep this example's complexity down, let's just limit it to `Float64` columns
 #[polars_expr(output_type=Float64)]
 fn vertical_weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let values = &inputs[0].f64()?;
-    let weights = &inputs[0].f64()?;
+    let weights = &inputs[1].f64()?;
     let mut numerator = 0.;
     let mut denominator = 0.;
     values.iter().zip(weights.iter()).for_each(|(v, w)| {

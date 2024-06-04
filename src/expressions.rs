@@ -196,9 +196,9 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
-            if values_inner.len() == 0 {
+            if values_inner.is_empty() {
                 // Mirror Polars, and return None for empty mean.
-                return None
+                return None;
             }
             let mut numerator: f64 = 0.;
             let mut denominator: f64 = 0.;
@@ -321,7 +321,7 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
 #[polars_expr(output_type=Float64)]
 fn vertical_weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let values = &inputs[0].f64()?;
-    let weights = &inputs[0].f64()?;
+    let weights = &inputs[1].f64()?;
     let mut numerator = 0.;
     let mut denominator = 0.;
     values.iter().zip(weights.iter()).for_each(|(v, w)| {

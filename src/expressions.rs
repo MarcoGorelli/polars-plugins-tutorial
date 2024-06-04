@@ -196,6 +196,10 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
+            if values_inner.len() == 0 {
+                // Mirror Polars, and return None for empty mean.
+                return None
+            }
             let mut numerator: f64 = 0.;
             let mut denominator: f64 = 0.;
             values_inner

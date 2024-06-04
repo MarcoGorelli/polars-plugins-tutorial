@@ -79,6 +79,10 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
             let values_inner = values_inner.i64().unwrap();
             let weights_inner = weights_inner.f64().unwrap();
+            if values_inner.len() == 0 {
+                // Mirror Polars, and return None for empty mean.
+                return None
+            }
             let mut numerator: f64 = 0.;
             let mut denominator: f64 = 0.;
             values_inner
@@ -97,8 +101,13 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-That's it! This version only accepts `Int64` values - see section 2 for
-how you could make it more generic.
+Note: this function has some limitations:
+
+- it assumes that each inner element of `values` and `weights` has the same
+  length - it would be better to raise an error if this assumption is not met
+- it only accepts `Int64` values () (see section 2 for how you could make it more generic).
+
+Nonetheless, if you just need to get a problem solved, it works!
 
 To try it out, we compile with `maturin develop` (or `maturin develop --release` if you're 
 benchmarking), and then we should be able to run `run.py`:

@@ -111,14 +111,14 @@ def test_add_suffix():
 
 def test_weighted_mean():
     df = pl.DataFrame(
-        {"values": [[1, 3, 2], [5, 7]], "weights": [[0.5, 0.3, 0.2], [0.1, 0.9]]}
+        {"values": [[1, 3, 2], [5, 7], None, [5, 7], []], "weights": [[0.5, 0.3, 0.2], [0.1, 0.9], [.1, .9], None, []]}
     )
     result = df.with_columns(weighted_mean=mp.weighted_mean("values", "weights"))
     expected = pl.DataFrame(
         {
-            "values": [[1, 3, 2], [5, 7]],
-            "weights": [[0.5, 0.3, 0.2], [0.1, 0.9]],
-            "weighted_mean": [1.7999999999999998, 6.8],
+            "values": [[1, 3, 2], [5, 7], None, [5, 7], []],
+            "weights": [[0.5, 0.3, 0.2], [0.1, 0.9], [.1, .9], None, []],
+            "weighted_mean": [1.7999999999999998, 6.8, None, None, None],
         }
     )
     assert_frame_equal(result, expected)

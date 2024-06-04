@@ -17,12 +17,12 @@ following:
 
 ```python
 def add_suffix(expr: IntoExpr, *, suffix: str) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
+    return register_plugin(
+        args=[expr],
         lib=lib,
         symbol="add_suffix",
         is_elementwise=True,
-        kwargs={"suffix": suffix}
+        kwargs={"suffix": suffix},
     )
 ```
 

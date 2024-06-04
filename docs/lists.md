@@ -42,12 +42,11 @@ On the Python side, this'll be similar to `sum_i64`:
 
 ```python
 def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
+    return register_plugin(
+        args=[expr, weights],
         lib=lib,
         symbol="weighted_mean",
         is_elementwise=True,
-        args=[weights]
     )
 ```
 

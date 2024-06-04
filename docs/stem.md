@@ -36,8 +36,8 @@ On the Python side, let's add the following function to `minimal_plugin/__init__
 
 ```python
 def snowball_stem(expr: IntoExpr) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
+    return register_plugin(
+        args=[expr],
         lib=lib,
         symbol="snowball_stem",
         is_elementwise=True,

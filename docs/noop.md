@@ -31,8 +31,8 @@ Start by adding the following to `minimal_plugin/__init__.py`:
 
 ```python
 def noop(expr: IntoExpr) -> pl.Expr:
-    expr = parse_into_expr(expr)
-    return expr.register_plugin(
+    return register_plugin(
+        args=[expr],
         lib=lib,
         symbol="noop",
         is_elementwise=True,
@@ -43,9 +43,13 @@ Let's go through this line-by-line:
 - when we compile Rust, it generates a Shared Object file.
   The `lib` variable holds its filepath;
 - We'll cover `is_elementwise` in [Yes we SCAN], for now don't pay attention to it;
-- We use the utility function `parse_into_expr` to make sure that
-  literals will be parsed as column names - this will ensure we'll be
-  able to call either `noop('a')` or `noop(pl.col('a'))`.
+- We use the utility function `register_plugin`, provided to us by the cookiecutter.
+  Polars actually has a public [register_plugin_function](https://docs.pola.rs/py-polars/html/reference/plugins.html#polars.plugins.register_plugin_function) utility for this, but it was only introduced in
+  Polars 0.20.16. The `register_plugin` function we introduce here handles backwards-compatibility
+  until Polars 0.20.6, so we use that in this tutorial.
+
+Note that string literals are parsed as expressions, so that if somebody
+calls `noop('a')`, it gets interpreted as `noop(pl.col('a'))`.
 
   [Yes we SCAN]: ../cum_sum/
 

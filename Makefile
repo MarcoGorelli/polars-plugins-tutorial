@@ -16,8 +16,8 @@ install-release: venv
 
 pre-commit: venv
 	cargo fmt --all --manifest-path Cargo.toml && cargo clippy --all-features --manifest-path Cargo.toml
-	ruff format minimal_plugin test_plugin.py
-	ruff check minimal_plugin test_plugin.py
+	venv/bin/python -m ruff format minimal_plugin test_plugin.py
+	venv/bin/python -m ruff check minimal_plugin test_plugin.py
 
 run: install
 	source venv/bin/activate && python run.py

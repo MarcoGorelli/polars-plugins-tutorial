@@ -1,6 +1,5 @@
 import polars as pl
 from pathlib import Path
-from polars.utils.udfs import _get_shared_lib_location
 from polars.type_aliases import IntoExpr
 from minimal_plugin.utils import register_plugin, parse_version
 

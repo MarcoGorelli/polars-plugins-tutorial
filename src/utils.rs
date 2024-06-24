@@ -13,7 +13,7 @@ where
     T::Array: ArrayFromIter<Option<K>>,
     F: FnMut(&Series, &Series) -> Option<K> + Copy,
 {
-    unsafe {
+    {
         ca.amortized_iter()
             .zip(weights.amortized_iter())
             .map(|(lhs, rhs)| match (lhs, rhs) {

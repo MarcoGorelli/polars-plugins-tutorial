@@ -20,12 +20,9 @@ a file ` rust-toolchain.toml` in your root directory
 [toolchain]
 channel = "nightly"
 ```
-You'll also need to add
-```toml
-polars-arrow = { version = "0.37.0", default-features = false }
-polars-core = { version = "0.37.0", default-features = false }
-```
-to `Cargo.toml`. Yes, this example is getting a bit heavier...
+You'll also need to add `polars-arrow` and `polars-core` to `Cargo.toml`
+and pin them to the same version that you pin `polars` to.
+Yes, this example is getting a bit heavier...
 
 The way the `reverse-geocoder` crate works is:
 

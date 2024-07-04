@@ -77,8 +77,8 @@ def find_local_polars_reference() -> str | None:
             text=True,
         )
         return res.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Error running `grep -rEZ '^[+-]?polars = ' .`")
+    except subprocess.CalledProcessError:
+        print("Error running `grep -rEZ '^[+-]?polars = ' .`")
         return None
 
 

@@ -19,7 +19,7 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  linux_tests:
+  polars_version_check:
     runs-on: ubuntu-latest
     strategy:
       matrix:

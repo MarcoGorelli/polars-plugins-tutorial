@@ -68,9 +68,8 @@ def find_local_polars_reference() -> str | None:
     ...
     """
     try:
-        # grep -rEZ '^[+-]?polars = ' .
         res = subprocess.run(
-            ["grep", "-rEZ", r"^[+-]?polars = ", "."],
+            ["grep", "-rEZ", "--exclude-dir=target", r"^[+-]?polars = ", "."],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -78,13 +77,14 @@ def find_local_polars_reference() -> str | None:
         )
         return res.stdout
     except subprocess.CalledProcessError:
-        print("Error running `grep -rEZ '^[+-]?polars = ' .`")
+        print("Error running `grep -rEZ --exclude-dir=target '^[+-]?polars = ' .`")
         return None
 
 
 grep_result = find_local_polars_reference()
 if not grep_result:
     print("Error running grep, try again")
+    sys.exit(1)
 
 # Iterate each non-empty line of the grep result
 for line in [ln for ln in grep_result.split("\n") if ln.strip()]:

@@ -64,13 +64,9 @@ The `cum_sum` definition may look complex, but it's not too bad once we
 break it down:
 
 - we hold the running sum in `state`
-- we iterate over rows, initialising `state` to be `None`
-- if the current row is `Some` and `state` is `None`,
-  then set `state` to the current row's value
-- if the current row is `Some` and `state` is `Some`, then
-  add the current row's value to `state`
-- if the current row is `None`, then don't modify `state`
-  and emit `None`.
+- we iterate over rows, initialising `state` to be `0`
+- if the current row is `Some`, then add the current row's value to `state` and emit the current value of `state`
+- if the current row is `None`, then don't modify `state` and emit `None`
 
 Note how we use `collect_trusted` at the end, rather than `collect`.
 `collect` would work as well, but if we know the length of the output

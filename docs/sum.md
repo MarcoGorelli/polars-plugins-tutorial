@@ -29,8 +29,7 @@ def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
 
 Time to write a binary function, in the sense that it takes two
 columns as input and produces a third.
-Polars gives us a handy `binary_elementwise` function for computing binary elementwise operations
-called `binary_elementwise`.
+Polars gives us a handy `broadcast_binary_elementwise` function for computing binary elementwise operations!
 
 Add the following to `src/expressions.rs`:
 
@@ -41,7 +40,7 @@ fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let right: &Int64Chunked = inputs[1].i64()?;
     // Note: there's a faster way of summing two columns, see
     // section 7.
-    let out: Int64Chunked = binary_elementwise(
+    let out: Int64Chunked = broadcast_binary_elementwise(
         left,
         right,
         |left: Option<i64>, right: Option<i64>| match (left, right) {
@@ -54,7 +53,7 @@ fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
 ```
 Note that you'll also need to add
 ```Rust
-use polars::prelude::arity::binary_elementwise;
+use polars::prelude::arity::broadcast_binary_elementwise;
 ```
 to the top of the `src/expressions.rs` file.
 

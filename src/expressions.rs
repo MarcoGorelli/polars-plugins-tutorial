@@ -1,5 +1,5 @@
 #![allow(clippy::unused_unit)]
-use polars::prelude::arity::binary_elementwise;
+use polars::prelude::arity::broadcast_binary_elementwise;
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
@@ -59,14 +59,13 @@ fn sum_i64(inputs: &[Series]) -> PolarsResult<Series> {
     let right: &Int64Chunked = inputs[1].i64()?;
     // Note: there's a faster way of summing two columns, see
     // section 7.
-    let out: Int64Chunked = binary_elementwise(
-        left,
-        right,
-        |left: Option<i64>, right: Option<i64>| match (left, right) {
+    let out: Int64Chunked =
+        broadcast_binary_elementwise(left, right, |left: Option<i64>, right: Option<i64>| match (
+            left, right,
+        ) {
             (Some(left), Some(right)) => Some(left + right),
             _ => None,
-        },
-    );
+        });
     Ok(out.into_series())
 }
 

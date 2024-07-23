@@ -22,3 +22,10 @@ df = pl.DataFrame({
     'group': ['a', 'a', 'a', 'b', 'b'],
 })
 print(df.group_by('group').agg(weighted_mean = mp.vertical_weighted_mean('values', 'weights')))
+
+df = pl.DataFrame({
+    'filename': [
+        "requirements.txt", "Makefile", "pkg.tar.gz", "tmp.d"
+    ],
+})
+print(df.with_columns(without_ext=mp.remove_extension('filename')))

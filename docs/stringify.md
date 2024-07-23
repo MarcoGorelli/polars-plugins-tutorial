@@ -108,4 +108,56 @@ fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
 ```
 
 Simpler, faster, and more memory-efficient.
-Thinking about allocations can really make a difference!
+_Thinking about allocations_ can really make a difference!
+
+## So let's think about allocations!
+
+### Choosing a method to apply a custom function
+
+Consider a user defined function (_that produces a  `String`_) to be applied to the elements of an input Series, e.g., append a suffix, convert to lowercase, etc. To apply that function, it's very likely your choice will be one of:
+
+- `apply_values`
+- `apply_to_buffer`
+- `apply_to_buffer_generic`
+
+All of them would probably work, as they're all essentially just mapping values. However, by choosing blindly, you might be missing some performance gains. To determine the most efficient method to be used:  
+1. Ask yourself: does the applied function allocate memory? If the answer is __yes__, the difference is negligible, use whichever method you prefer.  
+2. If it's not allocating, ask yourself again: is the function simply slicing the input? If so, `apply_values` with `Cow::Borrowed` should be the winner:  
+```rust
+fn remove_last_extension(s: &str) -> &str {
+    match s.rfind('.') {
+        Some(pos) => &s[..pos],
+        None => s,
+    }
+}
+
+#[polars_expr(output_type=String)]
+fn remove_extension(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.str()?;
+    let out: StringChunked = ca.apply_values(|val| {
+        let res = Cow::Borrowed(remove_last_extension(val));
+        res
+    });
+    Ok(out.into_series())
+}
+```
+3. Otherwise we only need one more piece of information: if the function operates __on a `String`__ to produce a `String`, `apply_to_buffer` should be preferred. An example for that is the `pig_latinnify` from the previous section.
+4. Otherwise, if it's any other PolarsDataType ("Any") to `String`, you'll want `apply_to_string_amortized`. Yes, it sounds like the input should be a `String`, but that's referring to the output. Here's an example:
+```rust
+// example once the PR is merged
+// ref:
+// - https://github.com/pola-rs/polars/pull/17670
+```
+
+
+Here's a cheatsheet (remember, the output type is always String):
+
+| Allocates | Only slices   | Input type | What to use?                          |
+|-----------|---------------|------------|---------------------------------------|
+| Yes       | N/A           | N/A        | Whatever you prefer                   |
+| No        | Yes           | String     | `apply_values` with `Cow::Borrowed`   |
+| No        | No            | String     | `apply_to_buffer`                     |
+| No        | No            | Any¹       | `apply_to_buffer_generic`             |
+
+¹ Any `PolarsDataType`

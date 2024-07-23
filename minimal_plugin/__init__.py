@@ -67,6 +67,15 @@ def pig_latinnify(expr: IntoExpr) -> pl.Expr:
     )
 
 
+def remove_extension(expr: IntoExpr) -> pl.Expr:
+    return register_plugin(
+        args=[expr],
+        lib=lib,
+        symbol="remove_extension",
+        is_elementwise=True,
+    )
+
+
 def abs_i64_fast(expr: IntoExpr) -> pl.Expr:
     return register_plugin_function(
         args=[expr],

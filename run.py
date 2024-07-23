@@ -36,3 +36,10 @@ df = pl.DataFrame(
 result = df.with_columns(interpolate=mp.interpolate("a"))
 print(result)
 
+
+df = pl.DataFrame({
+    'filename': [
+        "requirements.txt", "Makefile", "pkg.tar.gz", "tmp.d"
+    ],
+})
+print(df.with_columns(without_ext=mp.remove_extension('filename')))

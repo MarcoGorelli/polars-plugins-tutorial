@@ -1,0 +1,266 @@
+
+# 12. What are your `Option`s?
+
+One situation you might encounter when developing plugins or working with polars in rust is to decide whether to return a `Vec<T>` or a `Vec<Option<T>>`.
+A `Vec<Option<T>>` often seems like a good idea, as it's able to represent __invalid__ values without you having to resort to hacky workarounds.
+However, it does take its toll. It's easy to see how with a small example, not even related to polars:
+
+```rust
+use std::mem::size_of_val;
+
+fn main() {
+    let vector: Vec<i32> = vec![1, 2, 3];
+    println!("{}", size_of_val(&*vector));
+    // Output: 12
+
+    let vector: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
+    println!("{}", size_of_val(&*vector));
+    // Output: 24
+}
+```
+
+For `i32` that's twice the memory usage, yikes!
+So you might be wondering: how could I avoid that overhead?
+
+
+## Validity mask
+
+If we look close at some polars functions, we can see they get around this in different ways.
+One such way can be seen in `interpolate_impl`:
+
+```rust
+fn interpolate_impl<T, I>(chunked_arr: &ChunkedArray<T>, interpolation_branch: I) -> ChunkedArray<T>
+where
+    T: PolarsNumericType,
+    I: Fn(T::Native, T::Native, IdxSize, T::Native, &mut Vec<T::Native>),
+{
+    // This implementation differs from pandas as that boundary None's are not removed.
+    // This prevents a lot of errors due to expressions leading to different lengths.
+    if !chunked_arr.has_nulls() || chunked_arr.null_count() == chunked_arr.len() {
+        return chunked_arr.clone();
+    }
+
+    // We first find the first and last so that we can set the null buffer.
+    let first = chunked_arr.first_non_null().unwrap();
+    let last = chunked_arr.last_non_null().unwrap() + 1;
+
+    // Fill out with `first` nulls.
+    let mut out = Vec::with_capacity(chunked_arr.len());
+    let mut iter = chunked_arr.iter().skip(first);
+    for _ in 0..first {
+        out.push(Zero::zero());
+    }
+
+    // The next element of `iter` is definitely `Some(Some(v))`, because we skipped the first
+    // elements `first` and if all values were missing we'd have done an early return.
+    let mut low = iter.next().unwrap().unwrap();
+    out.push(low);
+    while let Some(next) = iter.next() {
+        if let Some(v) = next {
+            out.push(v);
+            low = v;
+        } else {
+            let mut steps = 1 as IdxSize;
+            for next in iter.by_ref() {
+                steps += 1;
+                if let Some(high) = next {
+                    let steps_n: T::Native = NumCast::from(steps).unwrap();
+                    interpolation_branch(low, high, steps, steps_n, &mut out);
+                    out.push(high);
+                    low = high;
+                    break;
+                }
+            }
+        }
+    }
+    if first != 0 || last != chunked_arr.len() {
+        let mut validity = MutableBitmap::with_capacity(chunked_arr.len());
+        validity.extend_constant(chunked_arr.len(), true);
+
+        for i in 0..first {
+            unsafe { validity.set_unchecked(i, false) };
+        }
+
+        for i in last..chunked_arr.len() {
+            unsafe { validity.set_unchecked(i, false) };
+            out.push(Zero::zero())
+        }
+
+        let array = PrimitiveArray::new(
+            T::get_dtype().to_arrow(CompatLevel::newest()),
+            out.into(),
+            Some(validity.into()),
+        );
+        ChunkedArray::with_chunk(chunked_arr.name(), array)
+    } else {
+        ChunkedArray::from_vec(chunked_arr.name(), out)
+    }
+}
+```
+
+That's a lot to digest at once, so let's take small steps and focus on the core logic.
+At the start, we store the indexes of the first and last null values:
+
+```rust
+let first = chunked_arr.first_non_null().unwrap();
+let last = chunked_arr.last_non_null().unwrap() + 1;
+```
+
+Then, we push actual zeroes to the output `Vec` - as many as there are nulls before the first valid value in the input:
+
+```rust
+let mut out = Vec::with_capacity(chunked_arr.len());
+for _ in 0..first {
+    out.push(Zero::zero());
+}
+```
+
+We skip the first `first` elements and start interpolating, but the droids we're looking for are not here, so let's skip that part:
+
+```rust
+let mut iter = chunked_arr.iter().skip(first);
+let mut low = iter.next().unwrap().unwrap();
+out.push(low);
+while let Some(next) = iter.next() {
+    // Interpolation logic
+}
+```
+
+Now, after _most_ of the work is done, we find something interesting - see the comments:
+
+```rust
+if first != 0 || last != chunked_arr.len() {
+    // A validity mask is created for the vector, initially all set to true
+    let mut validity = MutableBitmap::with_capacity(chunked_arr.len());
+    validity.extend_constant(chunked_arr.len(), true);
+
+    for i in 0..first {
+        // The indexes corresponding to the zeroes before the first valid value
+        // are set to false (invalid)
+        unsafe { validity.set_unchecked(i, false) };
+    }
+
+    for i in last..chunked_arr.len() {
+        // The indexes corresponding to the values after the last valid value
+        // are set to false (invalid)
+        unsafe { validity.set_unchecked(i, false) };
+
+        out.push(Zero::zero())  // This is equivalent to the zeroes pushed
+                                // before the first valid value, it's just done
+                                // out of order
+    }
+
+    let array = PrimitiveArray::new(
+        T::get_dtype().to_arrow(CompatLevel::newest()),
+        out.into(),
+        Some(validity.into()),
+    );
+    ChunkedArray::with_chunk(chunked_arr.name(), array)
+} else {
+    ChunkedArray::from_vec(chunked_arr.name(), out)
+}
+```
+
+Notice how only the outer nulls were set to invalid (if the inner nulls were as well, this wouldn't be a very good interpolation).
+The validity mask already exists for all Chunked types, so we could dismiss its overhead in this scenario.  
+__With this, the developers avoided returning a `Vec<Option<T>>`!__
+
+
+## Sentinel values
+
+Another way of avoiding a `Vec<Option<T>>` is to use values known to be invalid for the use case, but supported by the type `T`.
+For instance, if you have a `Vec<i32>` that represents indices, negative values shouldn't ever be present in that vector.
+By leveraging this information, you could actually use negative values to represent invalid elements.
+
+Let's take a look at an example PR that got merged into Polars that does exactly that:
+
+```diff
+index b3e4907..2110a0d 100644
+--- a/src/arg_previous_greater.rs
++++ b/src/arg_previous_greater.rs
+@@ -4,34 +4,38 @@ pub(crate) fn impl_arg_previous_greater<T>(ca: &ChunkedArray<T>) -> IdxCa
+ where
+     T: PolarsNumericType,
+ {
+-    let mut idx: Vec<Option<i32>> = Vec::with_capacity(ca.len());
++    let mut idx: Vec<i32> = Vec::with_capacity(ca.len());
+     let out: IdxCa = ca
+-        .into_iter()
++        .iter()
+         .enumerate()
+         .map(|(i, opt_val)| {
+             if opt_val.is_none() {
+-                idx.push(None);
++                idx.push(-1);
+                 return None;
+             }
+             let i_curr = i;
+-            let mut i = Some((i as i32) - 1); // look at previous element
+-            while i >= Some(0) && ca.get(i.unwrap() as usize).is_none() {
++            let mut i = (i as i32) - 1; // look at previous element
++            while i >= 0 && ca.get(i as usize).is_none() {
+                 // find previous non-null value
+-                i = Some(i.unwrap() - 1)
++                i -= 1;
+             }
+-            if i < Some(0) {
+-                idx.push(None);
++            if i < 0 {
++                idx.push(-1);
+                 return None;
+             }
+-            while i.is_some() && opt_val >= ca.get(i.unwrap() as usize) {
+-                i = idx[i.unwrap() as usize];
++            while (i != -1) && opt_val >= ca.get(i as usize) {
++                i = idx[i as usize];
+             }
+-            if i.is_none() {
+-                idx.push(None);
++            if i == -1 {
++                idx.push(-1);
+                 return Some(i_curr as IdxSize);
+             }
+             idx.push(i);
+-            i.map(|x| x as IdxSize)
++            if i == -1 {
++                None
++            } else {
++                Some(i as IdxSize)
++            }
+         })
+         .collect();
+     out
+```
+
+Again, it might be a lot to digest, but this time the diff makes it easier.
+Observe how the author replaces the usage of `Some(0)` with `-1`:
+
+```diff
+-            if i < Some(0) {
+-                idx.push(None);
++            if i < 0 {
++                idx.push(-1);
+```
+
+The check is done either way, so there's no runtime penalty for choosing one over the other.
+But memory-wise we already know the benefits!
+
+## Conclusion
+
+In general, _if you can avoid returning `Vec<Option<T>>` instead of `Vec<T>`,_ __do it!__
+Of course this doesn't apply in every situation, but it's something important for plugin developers to have in mind.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

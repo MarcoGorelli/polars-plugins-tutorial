@@ -25,6 +25,7 @@ nav:
     - lists_in_lists_out.md
   - struct.md
   - lost_in_space.md
+  - vec_of_option.md
   - publishing.md
   - aggregate.md
   - where_to_go.md

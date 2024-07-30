@@ -162,8 +162,10 @@ if first != 0 || last != chunked_arr.len() {
 ```
 
 Notice how only the outer nulls were set to invalid (if the inner nulls were as well, this wouldn't be a very good interpolation).
-The validity mask already exists for all Chunked types, so we could dismiss its overhead in this scenario.  
-__With this, the developers avoided returning a `Vec<Option<T>>`!__
+The validity mask is only allocated when there are no outer nulls.
+In that scenario, a `MutableBitmap` is used - which takes potentially much less space than storing contiguous `Option`s for the elements.
+
+__With this, the developers avoided allocating a `Vec<Option<T>>`!__
 
 
 ## Sentinel values
@@ -172,7 +174,7 @@ Another way of avoiding a `Vec<Option<T>>` is to use values known to be invalid 
 For instance, if you have a `Vec<i32>` that represents indices, negative values shouldn't ever be present in that vector.
 By leveraging this information, you could actually use negative values to represent invalid elements.
 
-Let's take a look at an example PR that got merged into Polars that does exactly that:
+Let's take a look at an example PR that got merged into polars-xdt (a plugin for DateTimes) that does exactly that:
 
 ```diff
 index b3e4907..2110a0d 100644
@@ -247,7 +249,7 @@ But memory-wise we already know the benefits!
 
 ## Conclusion
 
-In general, _if you can avoid returning `Vec<Option<T>>` instead of `Vec<T>`,_ __do it!__
+In general, _if you can avoid allocating `Vec<Option<T>>` instead of `Vec<T>`,_ __do it!__
 Of course this doesn't apply in every situation, but it's something important for plugin developers to have in mind.
 
 

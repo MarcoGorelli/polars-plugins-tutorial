@@ -174,68 +174,10 @@ Another way of avoiding a `Vec<Option<T>>` is to use values known to be invalid 
 For instance, if you have a `Vec<i32>` that represents indices, negative values shouldn't ever be present in that vector.
 By leveraging this information, you could actually use negative values to represent invalid elements.
 
-Let's take a look at an example PR that got merged into polars-xdt (a plugin for DateTimes) that does exactly that:
+Take a look at this diff from a PR that got merged into polars-xdt (a plugin for DateTimes) that does exactly that:
+[link](https://github.com/pola-rs/polars-xdt/pull/79/files#diff-991878a926639bba03bcc36a2790f73181b358f2ff59e0256f9ad76aa707be35)
 
-```diff
-index b3e4907..2110a0d 100644
---- a/src/arg_previous_greater.rs
-+++ b/src/arg_previous_greater.rs
-@@ -4,34 +4,38 @@ pub(crate) fn impl_arg_previous_greater<T>(ca: &ChunkedArray<T>) -> IdxCa
- where
-     T: PolarsNumericType,
- {
--    let mut idx: Vec<Option<i32>> = Vec::with_capacity(ca.len());
-+    let mut idx: Vec<i32> = Vec::with_capacity(ca.len());
-     let out: IdxCa = ca
--        .into_iter()
-+        .iter()
-         .enumerate()
-         .map(|(i, opt_val)| {
-             if opt_val.is_none() {
--                idx.push(None);
-+                idx.push(-1);
-                 return None;
-             }
-             let i_curr = i;
--            let mut i = Some((i as i32) - 1); // look at previous element
--            while i >= Some(0) && ca.get(i.unwrap() as usize).is_none() {
-+            let mut i = (i as i32) - 1; // look at previous element
-+            while i >= 0 && ca.get(i as usize).is_none() {
-                 // find previous non-null value
--                i = Some(i.unwrap() - 1)
-+                i -= 1;
-             }
--            if i < Some(0) {
--                idx.push(None);
-+            if i < 0 {
-+                idx.push(-1);
-                 return None;
-             }
--            while i.is_some() && opt_val >= ca.get(i.unwrap() as usize) {
--                i = idx[i.unwrap() as usize];
-+            while (i != -1) && opt_val >= ca.get(i as usize) {
-+                i = idx[i as usize];
-             }
--            if i.is_none() {
--                idx.push(None);
-+            if i == -1 {
-+                idx.push(-1);
-                 return Some(i_curr as IdxSize);
-             }
-             idx.push(i);
--            i.map(|x| x as IdxSize)
-+            if i == -1 {
-+                None
-+            } else {
-+                Some(i as IdxSize)
-+            }
-         })
-         .collect();
-     out
-```
-
-Again, it might be a lot to digest, but this time the diff makes it easier.
-Observe how the author replaces the usage of `Some(0)` with `-1`:
+Most of the changes show a replacement of the usage of `Option<i32>` with an `i32` directly, e.g.:
 
 ```diff
 -            if i < Some(0) {

@@ -1,5 +1,7 @@
 
-# 12. What are your `Option`s?
+# 12. `Vec<Option<T>>` vs. `Vec<T>`
+
+> "I got, I got, I got, I got options" – _Pitbull_, before writing his polars plugins
 
 One situation you might encounter when developing plugins or working with polars in rust is to decide whether to return a `Vec<T>` or a `Vec<Option<T>>`.
 A `Vec<Option<T>>` often seems like a good idea, as it's able to represent __invalid__ values without you having to resort to hacky workarounds.

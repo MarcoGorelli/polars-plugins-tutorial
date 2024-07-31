@@ -424,13 +424,6 @@ where
     }
 }
 
-fn linear_interp_signed<T: PolarsNumericType>(ca: &ChunkedArray<T>) -> Series
-where
-    ChunkedArray<T>: IntoSeries,
-{
-    interpolate_impl(ca, signed_interp::<T::Native>).into_series()
-}
-
 #[polars_expr(output_type=Int64)]
 fn interpolate(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];

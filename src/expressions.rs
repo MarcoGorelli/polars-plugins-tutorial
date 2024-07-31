@@ -405,11 +405,11 @@ where
         validity.extend_constant(chunked_arr.len(), true);
 
         for i in 0..first {
-            unsafe { validity.set_unchecked(i, false) };
+            validity.set(i, false);
         }
 
         for i in last..chunked_arr.len() {
-            unsafe { validity.set_unchecked(i, false) };
+            validity.set(i, false);
             out.push(Zero::zero())
         }
 

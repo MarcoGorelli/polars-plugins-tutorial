@@ -80,11 +80,11 @@ where
         validity.extend_constant(chunked_arr.len(), true);
 
         for i in 0..first {
-            unsafe { validity.set_unchecked(i, false) };
+            validity.set(i, false);
         }
 
         for i in last..chunked_arr.len() {
-            unsafe { validity.set_unchecked(i, false) };
+            validity.set(i, false);
             out.push(Zero::zero())
         }
 
@@ -139,13 +139,13 @@ if first != 0 || last != chunked_arr.len() {
     for i in 0..first {
         // The indexes corresponding to the zeroes before the first valid value
         // are set to false (invalid)
-        unsafe { validity.set_unchecked(i, false) };
+        validity.set(i, false);
     }
 
     for i in last..chunked_arr.len() {
         // The indexes corresponding to the values after the last valid value
         // are set to false (invalid)
-        unsafe { validity.set_unchecked(i, false) };
+        validity.set(i, false);
 
         out.push(Zero::zero())  // This is equivalent to the zeroes pushed
                                 // before the first valid value, it's just done

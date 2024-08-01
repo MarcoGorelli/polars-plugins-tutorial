@@ -1,11 +1,11 @@
 
 # 12. `Vec<Option<T>>` vs. `Vec<T>`
 
-> "I got, I got, I got, I got options" – _Pitbull_, before writing his polars plugins
+> "I got, I got, I got, I got options" – _Pitbull_, before writing his Polars plugins
 
-One situation you might encounter when developing plugins or working with polars in rust is to decide whether to return a `Vec<T>` or a `Vec<Option<T>>`.
+One situation you might encounter when developing plugins or working with Polars in Rust is to decide whether to return a `Vec<T>` or a `Vec<Option<T>>`.
 A `Vec<Option<T>>` often seems like a good idea, as it's able to represent __invalid__ values without you having to resort to hacky workarounds.
-However, it does take its toll. It's easy to see how with a small example, not even related to polars:
+However, it does take its toll. It's easy to see how with a small example, not even related to Polars:
 
 ```rust
 use std::mem::size_of_val;
@@ -22,13 +22,14 @@ fn main() {
 ```
 
 For `i32` that's twice the memory usage, yikes!
-So you might be wondering: how could I avoid that overhead?
+So you might be wondering: "how could I avoid that overhead?"
 
 
 ## Validity mask
 
-If we look close at some polars functions, we can see they get around this in different ways.
-One such way can be seen in `interpolate_impl`:
+If we look closely at some Polars functions, we can see they get around this in different ways.
+One such way can be seen in `interpolate_impl`, which does the heavy lifting for the
+[`interpolate` function](https://docs.pola.rs/api/python/version/0.18/reference/series/api/polars.Series.interpolate.html):
 
 ```rust
 fn interpolate_impl<T, I>(chunked_arr: &ChunkedArray<T>, interpolation_branch: I) -> ChunkedArray<T>
@@ -101,7 +102,7 @@ where
 ```
 
 That's a lot to digest at once, so let's take small steps and focus on the core logic.
-At the start, we store the indexes of the first and last null values:
+At the start, we store the indexes of the first and last non-null values:
 
 ```rust
 let first = chunked_arr.first_non_null().unwrap();
@@ -147,9 +148,9 @@ if first != 0 || last != chunked_arr.len() {
         // are set to false (invalid)
         validity.set(i, false);
 
-        out.push(Zero::zero())  // This is equivalent to the zeroes pushed
-                                // before the first valid value, it's just done
-                                // out of order
+        out.push(Zero::zero())  // Push zeroes after the last valid value, as
+                                // many as there are nulls at the end, just like
+                                // it was done before the first valid value.
     }
 
     let array = PrimitiveArray::new(
@@ -176,7 +177,7 @@ Another way of avoiding a `Vec<Option<T>>` is to use values known to be invalid 
 For instance, if you have a `Vec<i32>` that represents indices, negative values shouldn't ever be present in that vector.
 By leveraging this information, you could actually use negative values to represent invalid elements.
 
-Take a look at this diff from a PR that got merged into polars-xdt (a plugin for DateTimes) that does exactly that:
+Take a look at this diff from a PR that got merged into `polars-xdt` (a plugin for DateTimes) that does exactly that:
 [link](https://github.com/pola-rs/polars-xdt/pull/79/files#diff-991878a926639bba03bcc36a2790f73181b358f2ff59e0256f9ad76aa707be35)
 
 Most of the changes show a replacement of the usage of `Option<i32>` with an `i32` directly, e.g.:

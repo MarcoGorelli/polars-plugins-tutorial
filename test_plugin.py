@@ -2,6 +2,8 @@ import polars as pl
 import minimal_plugin as mp
 from polars.testing import assert_frame_equal
 
+import pytest
+
 
 def test_noop():
     df = pl.DataFrame(
@@ -63,6 +65,9 @@ def test_sum_i64():
     assert_frame_equal(result, expected)
 
 
+@pytest.mark.xfail(
+    reason="Upstream is failing with: this expression cannot run in the group_by context"
+)
 def test_cum_sum():
     df = pl.DataFrame(
         {
@@ -179,6 +184,9 @@ def test_reverse_geocode():
     assert_frame_equal(result, expected)
 
 
+@pytest.mark.xfail(
+    reason="Upstream is failing with: this expression cannot run in the group_by context"
+)
 def test_vertical_weighted_mean():
     df = pl.DataFrame(
         {

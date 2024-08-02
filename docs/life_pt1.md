@@ -291,25 +291,3 @@ fn life_step(inputs: &[Series]) -> PolarsResult<Series> {
 Awesome, now what? If we ignore tests, _as plugin developers_, we could say we're done.
 Nothing's happened yet, so how could we be done?
 In the next section we'll take a look at how the plugin _user_ would call the functions we made available.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

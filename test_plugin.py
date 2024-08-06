@@ -2,8 +2,6 @@ import polars as pl
 import minimal_plugin as mp
 from polars.testing import assert_frame_equal
 
-import pytest
-
 
 def test_noop():
     df = pl.DataFrame(

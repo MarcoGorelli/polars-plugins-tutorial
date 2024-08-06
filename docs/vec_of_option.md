@@ -3,7 +3,7 @@
 
 > "I got, I got, I got, I got options" – _Pitbull_, before writing his first Polars plugin
 
-In the plugins we're looked at so far, we typically created an iterator of `Option`s and let Polars collect it into a `ChunkedArray`.
+In the plugins we looked at so far, we typically created an iterator of options and let Polars collect it into a `ChunkedArray`.
 Sometimes, however, you need to store intermediate values in a `Vec`. You might be tempted to make it a `Vec<Option<T>>`, where
 missing values are `None` and present values are `Some`...
 
@@ -29,7 +29,7 @@ So...how can we create an output which includes missing values, without allocati
 
 ## Validity mask
 
-Instead of creating a vector of `Option`s, we can create a vector of primitive values with zeroes in place of the missing values, and use
+Instead of creating a vector of options, we can create a vector of primitive values with zeroes in place of the missing values, and use
 a validity mask to indicate which values are missing. One example of this can be seen in Polars' `interpolate_impl`, which does the heavy lifting for the
 [`Series.interpolate`](https://docs.pola.rs/api/python/version/0.18/reference/series/api/polars.Series.interpolate.html):
 
@@ -134,8 +134,8 @@ while let Some(next) = iter.next() {
 }
 ```
 
-Now, after _most_ of the work is done and we've filled up the `out` `Vec` (except for trailing missing values),
-we create a validiy mask and set it to `false` for elements which we'd like to show up as missing:
+Now, after _most_ of the work is done and we've filled up most of `out`,
+we create a validity mask and set it to `false` for elements which we'd like to declare as missing:
 
 ```rust
 if first != 0 || last != chunked_arr.len() {
@@ -170,22 +170,21 @@ if first != 0 || last != chunked_arr.len() {
 }
 ```
 
-Notice how only the outer nulls were set to invalid (the inner ones were filled in by the interpolation function).
-The validity mask is only allocated when there are no outer nulls (`if first != 0 || last != chunked_arr.len()`).
-Each element of a `MutableBitmap` only takes up a single bit, so the total space used is much less than it would've been
-if we'd created `out` as a vector of `Option`s!
+The `MutableBitmap` only requires one byte per 8 elements, so the total space used is much less than it would've been
+if we'd created `out` as a vector of options!
+Further, note how the validity mask is only allocated when the output contains nulls - if there are no nulls, we can
+save even more memory by not having a validity mask at all!
 
 ## Sentinel values
 
-In some other cases, you may be able to avoid allocating a `Vec<Option<T>>` by using values known to be invalid for the use
-case, but supported by the type `T`. For instance, if you have a `Vec<i32>` that represents indices, negative values
-shouldn't ever be present in that vector.
-By leveraging this information, you could actually `-1` to represent invalid elements.
+Let's look at another example of where it's possible to avoid allocating a vector of options. This example comes
+from the Polars-XDT plugin. There's one function there which creates a temporary `idx` vector in which, for
+each element, we store the index of the previous element larger than it. If an element has no previous larger
+element, then rather than storing `None` (thus forcing all non-missing elements to be `Some`), we can just
+store `-1`.
 
-Take a look at this diff from a PR from the Polars plugin `polars-xdt` that does exactly that:
-[link](https://github.com/pola-rs/polars-xdt/pull/79/files#diff-991878a926639bba03bcc36a2790f73181b358f2ff59e0256f9ad76aa707be35)
-
-The gist of the PR is changes such as:
+Take a look at [this diff from a PR](https://github.com/pola-rs/polars-xdt/pull/79/files#diff-991878a926639bba03bcc36a2790f73181b358f2ff59e0256f9ad76aa707be35) which does exactly that,
+in which most changes are along the lines of:
 
 ```diff
 -            if i < Some(0) {
@@ -194,10 +193,13 @@ The gist of the PR is changes such as:
 +                idx.push(-1);
 ```
 
-The check is done either way, so there's no runtime penalty for choosing one over the other.
-But memory-wise we already know the benefits!
+There's no functional behaviour change, but we already know the memory benefits!
 
 ## Conclusion
 
-In general, _if you can avoid allocating `Vec<Option<T>>` instead of `Vec<T>`,_ __do it!__
-Of course this doesn't apply in every situation, but it's something important for plugin developers to have in mind.
+In general, _if you can avoid allocating `Vec<Option<T>>` instead of `Vec<T>`,_ __do it!__!
+
+!!!note
+
+    This advice only applies if you're creating a vector to store results in. If you're collecting
+    an iterator of options into a chunked array, then Polars already optimises this for you.

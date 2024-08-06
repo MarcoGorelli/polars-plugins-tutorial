@@ -1,11 +1,15 @@
 
 # 12. `Vec<Option<T>>` vs. `Vec<T>`
 
-> "I got, I got, I got, I got options" – _Pitbull_, before writing his Polars plugins
+> "I got, I got, I got, I got options" – _Pitbull_, before writing his first Polars plugin
 
-One situation you might encounter when developing plugins or working with Polars in Rust is to decide whether to return a `Vec<T>` or a `Vec<Option<T>>`.
-A `Vec<Option<T>>` often seems like a good idea, as it's able to represent __invalid__ values without you having to resort to hacky workarounds.
-However, it does take its toll. It's easy to see how with a small example, not even related to Polars:
+In the plugins we're looked at so far, we typically created an iterator of `Option`s and let Polars collect it into a `ChunkedArray`.
+Sometimes, however, you need to store intermediate values in a `Vec`. You might be tempted to make it a `Vec<Option<T>>`, where
+missing values are `None` and present values are `Some`...
+
+🛑 BUT WAIT!
+
+Did you know that `Vec<Option<i32>>` occupies twice as much memory as `Vec<i32>`? Let's prove it:
 
 ```rust
 use std::mem::size_of_val;
@@ -21,15 +25,13 @@ fn main() {
 }
 ```
 
-For `i32` that's twice the memory usage, yikes!
-So you might be wondering: "how could I avoid that overhead?"
-
+So...how can we create an output which includes missing values, without allocating twice as much memory as is necessary?
 
 ## Validity mask
 
-If we look closely at some Polars functions, we can see they get around this in different ways.
-One such way can be seen in `interpolate_impl`, which does the heavy lifting for the
-[`interpolate` function](https://docs.pola.rs/api/python/version/0.18/reference/series/api/polars.Series.interpolate.html):
+Instead of creating a vector of `Option`s, we can create a vector of primitive values with zeroes in place of the missing values, and use
+a validity mask to indicate which values are missing. One example of this can be seen in Polars' `interpolate_impl`, which does the heavy lifting for the
+[`Series.interpolate`](https://docs.pola.rs/api/python/version/0.18/reference/series/api/polars.Series.interpolate.html):
 
 ```rust
 fn interpolate_impl<T, I>(chunked_arr: &ChunkedArray<T>, interpolation_branch: I) -> ChunkedArray<T>
@@ -109,7 +111,9 @@ let first = chunked_arr.first_non_null().unwrap();
 let last = chunked_arr.last_non_null().unwrap() + 1;
 ```
 
-Then, we push actual zeroes to the output `Vec` - as many as there are nulls before the first valid value in the input:
+We then create a vector `out` to store the result values in, and in places where we'd like
+the output to be missing, we push zeroes (we'll see below how we tell Polars that these are
+to be considered missing, rather than as ordinary zeroes):
 
 ```rust
 let mut out = Vec::with_capacity(chunked_arr.len());
@@ -118,7 +122,8 @@ for _ in 0..first {
 }
 ```
 
-We skip the first `first` elements and start interpolating, but the droids we're looking for are not here, so let's skip that part:
+We then skip the first `first` elements and start interpolating (note how we write `out.push(low)`, not `out.push(Some(low))`
+- we gloss over the rest as it's not related to the main focus of this chapter):
 
 ```rust
 let mut iter = chunked_arr.iter().skip(first);
@@ -129,7 +134,8 @@ while let Some(next) = iter.next() {
 }
 ```
 
-Now, after _most_ of the work is done, we find something interesting - see the comments:
+Now, after _most_ of the work is done and we've filled up the `out` `Vec` (except for trailing missing values),
+we create a validiy mask and set it to `false` for elements which we'd like to show up as missing:
 
 ```rust
 if first != 0 || last != chunked_arr.len() {
@@ -164,23 +170,22 @@ if first != 0 || last != chunked_arr.len() {
 }
 ```
 
-Notice how only the outer nulls were set to invalid (if the inner nulls were as well, this wouldn't be a very good interpolation).
-The validity mask is only allocated when there are no outer nulls.
-In that scenario, a `MutableBitmap` is used - which takes potentially much less space than storing contiguous `Option`s for the elements.
-
-__With this, the developers avoided allocating a `Vec<Option<T>>`!__
-
+Notice how only the outer nulls were set to invalid (the inner ones were filled in by the interpolation function).
+The validity mask is only allocated when there are no outer nulls (`if first != 0 || last != chunked_arr.len()`).
+Each element of a `MutableBitmap` only takes up a single bit, so the total space used is much less than it would've been
+if we'd created `out` as a vector of `Option`s!
 
 ## Sentinel values
 
-Another way of avoiding a `Vec<Option<T>>` is to use values known to be invalid for the use case, but supported by the type `T`.
-For instance, if you have a `Vec<i32>` that represents indices, negative values shouldn't ever be present in that vector.
-By leveraging this information, you could actually use negative values to represent invalid elements.
+In some other cases, you may be able to avoid allocating a `Vec<Option<T>>` by using values known to be invalid for the use
+case, but supported by the type `T`. For instance, if you have a `Vec<i32>` that represents indices, negative values
+shouldn't ever be present in that vector.
+By leveraging this information, you could actually `-1` to represent invalid elements.
 
-Take a look at this diff from a PR that got merged into `polars-xdt` (a plugin for DateTimes) that does exactly that:
+Take a look at this diff from a PR from the Polars plugin `polars-xdt` that does exactly that:
 [link](https://github.com/pola-rs/polars-xdt/pull/79/files#diff-991878a926639bba03bcc36a2790f73181b358f2ff59e0256f9ad76aa707be35)
 
-Most of the changes show a replacement of the usage of `Option<i32>` with an `i32` directly, e.g.:
+The gist of the PR is changes such as:
 
 ```diff
 -            if i < Some(0) {
@@ -196,18 +201,3 @@ But memory-wise we already know the benefits!
 
 In general, _if you can avoid allocating `Vec<Option<T>>` instead of `Vec<T>`,_ __do it!__
 Of course this doesn't apply in every situation, but it's something important for plugin developers to have in mind.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

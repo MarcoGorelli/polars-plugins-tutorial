@@ -1,11 +1,14 @@
 #![allow(clippy::unused_unit)]
+use polars::export::num::{NumCast, Zero};
 use polars::prelude::arity::broadcast_binary_elementwise;
 use polars::prelude::*;
+use polars_arrow::bitmap::MutableBitmap;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
 use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
 use serde::Deserialize;
+use std::ops::{Add, Div, Mul, Sub};
 
 use crate::utils::binary_amortized_elementwise;
 
@@ -331,4 +334,101 @@ fn vertical_weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     });
     let result = numerator / denominator;
     Ok(Series::new("", vec![result]))
+}
+
+fn linear_itp<T>(low: T, step: T, slope: T) -> T
+where
+    T: Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Div<Output = T>,
+{
+    low + step * slope
+}
+
+#[inline]
+fn signed_interp<T>(low: T, high: T, steps: IdxSize, steps_n: T, out: &mut Vec<T>)
+where
+    T: Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Div<Output = T> + NumCast + Copy,
+{
+    let slope = (high - low) / steps_n;
+    for step_i in 1..steps {
+        let step_i: T = NumCast::from(step_i).unwrap();
+        let v = linear_itp(low, step_i, slope);
+        out.push(v)
+    }
+}
+
+fn interpolate_impl<T, I>(chunked_arr: &ChunkedArray<T>, interpolation_branch: I) -> ChunkedArray<T>
+where
+    T: PolarsNumericType,
+    I: Fn(T::Native, T::Native, IdxSize, T::Native, &mut Vec<T::Native>),
+{
+    // This implementation differs from pandas as that boundary None's are not removed.
+    // This prevents a lot of errors due to expressions leading to different lengths.
+    if chunked_arr.null_count() == 0 || chunked_arr.null_count() == chunked_arr.len() {
+        return chunked_arr.clone();
+    }
+
+    // We first find the first and last so that we can set the null buffer.
+    let first = chunked_arr.first_non_null().unwrap();
+    let last = chunked_arr.last_non_null().unwrap() + 1;
+
+    // Fill out with `first` nulls.
+    let mut out = Vec::with_capacity(chunked_arr.len());
+    let mut iter = chunked_arr.iter().skip(first);
+    for _ in 0..first {
+        out.push(Zero::zero());
+    }
+
+    // The next element of `iter` is definitely `Some(Some(v))`, because we skipped the first
+    // elements `first` and if all values were missing we'd have done an early return.
+    let mut low = iter.next().unwrap().unwrap();
+    out.push(low);
+    while let Some(next) = iter.next() {
+        if let Some(v) = next {
+            out.push(v);
+            low = v;
+        } else {
+            let mut steps = 1 as IdxSize;
+            for next in iter.by_ref() {
+                steps += 1;
+                if let Some(high) = next {
+                    let steps_n: T::Native = NumCast::from(steps).unwrap();
+                    interpolation_branch(low, high, steps, steps_n, &mut out);
+                    out.push(high);
+                    low = high;
+                    break;
+                }
+            }
+        }
+    }
+    if first != 0 || last != chunked_arr.len() {
+        let mut validity = MutableBitmap::with_capacity(chunked_arr.len());
+        validity.extend_constant(chunked_arr.len(), true);
+
+        for i in 0..first {
+            validity.set(i, false);
+        }
+
+        for i in last..chunked_arr.len() {
+            validity.set(i, false);
+            out.push(Zero::zero())
+        }
+
+        let array = PrimitiveArray::new(
+            T::get_dtype().to_arrow(true),
+            out.into(),
+            Some(validity.into()),
+        );
+        ChunkedArray::with_chunk(chunked_arr.name(), array)
+    } else {
+        ChunkedArray::from_vec(chunked_arr.name(), out)
+    }
+}
+
+#[polars_expr(output_type=Int64)]
+fn interpolate(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.i64()?;
+    let mut out: Int64Chunked = interpolate_impl(ca, signed_interp::<i64>);
+    out.rename(ca.name());
+    Ok(out.into_series())
 }

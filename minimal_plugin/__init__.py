@@ -131,3 +131,12 @@ def vertical_weighted_mean(values: IntoExpr, weights: IntoExpr) -> pl.Expr:
         is_elementwise=False,
         returns_scalar=True,
     )
+
+
+def interpolate(expr: IntoExpr) -> pl.Expr:
+    return register_plugin(
+        args=[expr],
+        lib=lib,
+        symbol="interpolate",
+        is_elementwise=False,
+    )

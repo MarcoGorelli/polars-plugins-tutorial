@@ -22,3 +22,9 @@ df = pl.DataFrame({
     'group': ['a', 'a', 'a', 'b', 'b'],
 })
 print(df.group_by('group').agg(weighted_mean = mp.vertical_weighted_mean('values', 'weights')))
+
+df = pl.DataFrame({
+    'a': [None, None, 3, None, None, 9, 11, None],
+})
+result = df.with_columns(interpolate=mp.interpolate('a'))
+print(result)

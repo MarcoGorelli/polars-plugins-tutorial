@@ -140,3 +140,11 @@ def interpolate(expr: IntoExpr) -> pl.Expr:
         symbol="interpolate",
         is_elementwise=False,
     )
+
+def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
+    return register_plugin(
+        args=[left, mid, right],
+        lib=lib,
+        symbol="life_step",
+        is_elementwise=False,
+    )

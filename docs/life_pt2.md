@@ -156,3 +156,7 @@ python run.py -i input/toad.txt -d 0.3
 ![Toad pattern with period = 2, running in a dataframe](assets/life_toad_df.gif)
 
 __Victory!__
+
+## Reference
+
+The entire code for this plugin, including the user's side can be found on [GitHub](https://github.com/condekind/life_polars_plugin)

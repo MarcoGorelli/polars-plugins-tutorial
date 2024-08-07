@@ -124,3 +124,35 @@ class Application:
             )
             print(f"max_num_steps={self._args.num_steps}\ndelay={self._args.delay}")
 ```
+
+To run the program, we only need two more things - an entry point and an input file.
+Create a `toad.txt` in an `input` folder, containing:
+
+```
+00000000000
+00000000000
+00000000000
+00001110000
+00011100000
+00000000000
+00000000000
+00000000000
+```
+
+and add this entry point to the end of `run.py`:
+
+```python
+if __name__ == "__main__":
+    app = Application()
+    app.start()
+```
+
+Now we can see the results of our work, at last:
+
+```shell
+python run.py -i input/toad.txt -d 0.3
+```
+
+![Toad pattern with period = 2, running in a dataframe](assets/life_toad_df.gif)
+
+__Victory!__

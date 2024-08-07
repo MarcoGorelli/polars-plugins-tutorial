@@ -253,8 +253,8 @@ fn life_step(inputs: &[Series]) -> PolarsResult<Series> {
 
     let len = lf.len();
 
-    let mut out: Int64Chunked = ca_curr
-        .into_no_null_iter()
+    let mut out: Int64Chunked = mid
+        .iter()
         .enumerate()
         .map(|(idx, val)| {
             // Neighbours above

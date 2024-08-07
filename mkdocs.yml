@@ -26,12 +26,12 @@ nav:
   - struct.md
   - lost_in_space.md
   - vec_of_option.md
+  - 13. Can we run Doom?:
+      - life_pt1.md
+      - life_pt2.md
   - publishing.md
   - aggregate.md
   - where_to_go.md
-  - ??. Can we run Doom?:
-    - life_pt1.md
-    - life_pt2.md
 
 plugins:
 - search

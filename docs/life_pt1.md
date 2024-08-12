@@ -164,7 +164,7 @@ Do we stop the simulation from propagating there, do we wrap around, or somethin
 Many implementations stop the simulation at the border, so let's do it differently, let's wrap around!
 
 Wait, why are we talking about this here - isn't this a concern to be solved by our plugin in Rust?
-Yes, but in Python-land is where we name our columns.
+Yes, but Python-land is where we name our columns.
 So in order to have that nice overriding behavior, we need to address it here.
 This is also a hint at what the mysterious `_nwise_wrapping` function does:
 
@@ -213,7 +213,7 @@ def step(df: pl.DataFrame, n: int = 1):
 ```
 
 We're done with the Python side of things.
-And if you're wondering: "what plugin did we actually register with `life_step`" -
+And if you're wondering: "what plugin did we actually register with `life_step`?" -
 you're totally right to be confused, we didn't touch Rust yet!
 Why did we leave it for last?
 Because surprisingly, it's much simpler than the Python side, and much shorter too.

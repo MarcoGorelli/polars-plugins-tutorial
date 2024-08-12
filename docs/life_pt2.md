@@ -5,7 +5,7 @@ In the last section we saw what the plugin developers made available for a plugi
 Now we put the user's hat and demonstrate that _usage_.
 For this, we'll implement a CLI app that will parse a board file provided as an argument, then run a step of the simulation every `delay` seconds (also provided as an argument).
 
-> Tip: place the code in this section in a separate file, e.g., `run.py`.
+> Tip: place the code from this section in a separate file, e.g., `run.py`.
 
 Just like what we did previously, let's look at an overview of what's to come:
 
@@ -139,7 +139,7 @@ Create a `toad.txt` in an `input` folder, containing:
 00000000000
 ```
 
-and add this entry point to the end of `run.py`:
+and add this entry point at the end of `run.py`:
 
 ```python
 if __name__ == "__main__":
@@ -150,6 +150,10 @@ if __name__ == "__main__":
 Now we can see the results of our work, at last:
 
 ```shell
+# Compile the rust code
+maturin develop --release
+
+# Run the application
 python run.py -i input/toad.txt -d 0.3
 ```
 

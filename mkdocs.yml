@@ -28,6 +28,9 @@ nav:
   - vec_of_option.md
   - publishing.md
   - aggregate.md
+  - "Extra: Can we run Doom?":
+    - life_pt1.md
+    - life_pt2.md
   - where_to_go.md
 
 plugins:

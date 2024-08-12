@@ -93,10 +93,10 @@ class Application:
     # ...
 
     def start(
-            self,
-            n: int | None = None,
-            delay: float | None = None,
-            print_df: bool = True,
+        self,
+        n: int | None = None,
+        delay: float | None = None,
+        print_df: bool = True,
     ):
         if n is None:
             n = self.steps
@@ -163,4 +163,4 @@ __Victory!__
 
 ## Reference
 
-The entire code for this plugin, including the user's side can be found on [GitHub](https://github.com/condekind/life_polars_plugin).
+The entire code for this plugin, including the user's side, can be found on [GitHub](https://github.com/condekind/life_polars_plugin).

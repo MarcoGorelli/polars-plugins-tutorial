@@ -5,7 +5,10 @@
 
 <hr>
 
-> ⚠️ __Note:__ This section is completely optional, and is provided for a bit of nerdy fun. It is by no means essential, feel free to skip it if it doesn't interest you!
+!!!note 
+    This section is completely optional, and is provided for a bit
+    of nerdy fun. It is by no means essential, feel free to skip
+    it if it doesn't interest you!
 
 Well, someone can, probably. But doom in a dataframe would be kinda hard to play, so let's try something simpler.
 [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) is a notorious Cellular Automaton that we could perhaps implement with a plugin.
@@ -16,7 +19,11 @@ For science, of course.
 Jokes aside, life allows us to show how a plugin can access elements in both neighbouring rows and columns for each element.
 With a little bit of extra Python, we can display things in an almost pretty manner.
 
-> __Note:__ For this tutorial, we'll assume you created a new plugin from the cookiecutter template and named it `game_of_life` (these steps aren't shown here, since they were already covered at the very beginning of this series).
+!!!note
+    For this tutorial, we'll assume you created a new plugin from the
+    cookiecutter template and named it `game_of_life`
+    (these steps aren't shown here, since they were already covered at the
+    very beginning of this series).
 
 In this section we'll cover the developer side of the plugin (both Python and Rust).
 In the next section we'll show how a user can import and use what we developed here.
@@ -62,11 +69,13 @@ Starting with the function to parse a board from a file or stdin:
 
 ```python
 def parse_board(
-        ifile: str
-               | bytes
-               | PathLike[str]
-               | PathLike[bytes]
-               | Iterable[str | bytes | PathLike[str] | PathLike[bytes]],
+    ifile: (
+        str
+        | bytes
+        | PathLike[str]
+        | PathLike[bytes]
+        | Iterable[str | bytes | PathLike[str] | PathLike[bytes]]
+    ),
 ) -> list[list[int]]:
     """
     Converts a board in a file containing only 0s and 1s, e.g.::
@@ -141,7 +150,8 @@ def board_to_df(board: list[list[int]]) -> pl.DataFrame:
 
 Let's skip `_nwise_wrapping` and `step` for now and jump straight to the last function - we'll return to the two we skipped soon:
 
-> Don't forget to read the comments!
+!!!note
+    Don't forget to read the comments!
 
 ```python
 def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:

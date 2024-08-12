@@ -163,4 +163,4 @@ __Victory!__
 
 ## Reference
 
-The entire code for this plugin, including the user's side can be found on [GitHub](https://github.com/condekind/life_polars_plugin)
+The entire code for this plugin, including the user's side can be found on [GitHub](https://github.com/condekind/life_polars_plugin).

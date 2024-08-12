@@ -1,5 +1,5 @@
 
-# 13.2 Plugin user
+# Extra.2 Plugin user
 
 In the last section we saw what the plugin developers made available for a plugin user.
 Now we put the user's hat and demonstrate that _usage_.

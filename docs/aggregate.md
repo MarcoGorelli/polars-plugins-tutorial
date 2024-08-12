@@ -1,4 +1,4 @@
-# 15. In (the) aggregate
+# 14. In (the) aggregate
 
 Enough transorming columns! Let's aggregate them instead.
 

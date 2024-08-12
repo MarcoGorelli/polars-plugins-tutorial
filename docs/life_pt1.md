@@ -1,7 +1,11 @@
 
-# 13.1 Well...
+# Extra.1 Well...
 
 > "No." - _Doom Slayer_
+
+<hr>
+
+> ⚠️ __Note:__ This section is completely optional, and is provided for a bit of nerdy fun. It is by no means essential, feel free to skip it if it doesn't interest you!
 
 Well, someone can, probably. But doom in a dataframe would be kinda hard to play, so let's try something simpler.
 [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) is a notorious Cellular Automaton that we could perhaps implement with a plugin.

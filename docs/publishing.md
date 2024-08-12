@@ -1,4 +1,4 @@
-# 14. Publishing your plugin to PyPI and becoming famous
+# 13. Publishing your plugin to PyPI and becoming famous
 
 Here are the steps you should follow:
 

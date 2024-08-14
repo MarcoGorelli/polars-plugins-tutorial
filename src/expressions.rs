@@ -255,10 +255,8 @@ use reverse_geocoder::ReverseGeocoder;
 
 #[polars_expr(output_type=String)]
 fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
-    let binding = inputs[0].struct_()?.field_by_name("lat")?;
-    let latitude = binding.f64()?;
-    let binding = inputs[0].struct_()?.field_by_name("lon")?;
-    let longitude = binding.f64()?;
+    let latitude = inputs[0].f64()?;
+    let longitude = inputs[1].f64()?;
     let geocoder = ReverseGeocoder::new();
     let out = binary_elementwise_into_string_amortized(latitude, longitude, |lhs, rhs, out| {
         let search_result = geocoder.search((lhs, rhs));

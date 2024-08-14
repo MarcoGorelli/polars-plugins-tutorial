@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Sequence, Any
 import polars as pl
 
 if TYPE_CHECKING:
-    from polars.type_aliases import IntoExpr, PolarsDataType
+    from my_plugin.typing import IntoExpr, PolarsDataType
     from pathlib import Path
 
 
@@ -54,18 +54,18 @@ def register_plugin(
     *,
     symbol: str,
     is_elementwise: bool,
+    kwargs: dict[str, Any] | None = None,
     args: list[IntoExpr],
     lib: str | Path,
-    kwargs: dict[str, Any] | None = None,
     returns_scalar: bool = False,
 ) -> pl.Expr:
     if parse_version(pl.__version__) < parse_version("0.20.16"):
-        assert isinstance(args[0], pl.Expr)
+        expr = parse_into_expr(args[0])
         assert isinstance(lib, str)
-        return args[0].register_plugin(
+        return expr.register_plugin(
             lib=lib,
             symbol=symbol,
-            args=args[1:],
+            args=args[1:],  # type: ignore[arg-type]
             kwargs=kwargs,
             is_elementwise=is_elementwise,
             returns_scalar=returns_scalar,

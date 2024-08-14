@@ -2384,3 +2384,8 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "pyo3-polars"
+version = "0.11.1"
+source = "git+https://github.com/MarcoGorelli/pyo3-polars.git#239daf3b11d5d4a0e9ea2d65632a5e839670df74"

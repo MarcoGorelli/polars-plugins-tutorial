@@ -12,14 +12,18 @@ name = "minimal_plugin"
 crate-type= ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.21.2", features = ["extension-module"] }
-pyo3-polars = { version = "0.15.0", features = ["derive"] }
+pyo3 = { version = "0.22.2", features = ["extension-module", "abi3-py38"] }
+pyo3-polars = { version = "0.16.0", features = ["derive", "dtype-struct", "dtype-decimal"] }
 serde = { version = "1", features = ["derive"] }
-polars = { version = "0.41.3", features=["dtype-struct"], default-features = false }
-polars-arrow = { version = "0.41.3", default-features = false }
-polars-core = { version = "0.41.3", default-features = false }
+polars = { version = "0.42.0", features = ["dtype-struct"], default-features = false }
+polars-arrow = { version = "0.42.0", default-features = false }
+polars-core = { version = "0.42.0", default-features = false }
+polars-sql = { version = "0.42.0", default-features = false }
 reverse_geocoder = "4.1.1"
 # rust-stemmers = "1.2.0"
+
+[patch.crates-io]
+pyo3-polars = { git = 'https://github.com/MarcoGorelli/pyo3-polars.git', rev='a0327ec121986711aec32dc1e52234838bf3b25b' }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 jemallocator = { version = "0.5", features = ["disable_initial_exec_tls"] }

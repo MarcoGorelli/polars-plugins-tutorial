@@ -89,7 +89,7 @@ Can we do better?
 
 ## Pig-latinnify - take 2
 
-Yes! `StringChunked` has a utility `apply_to_buffer` method which amortises
+Yes! `StringChunked` has a utility `apply_into_string_amortized` method which amortises
 the cost of creating new strings for each row by creating a string upfront,
 clearing it, and repeatedly writing to it.
 This gives a 4x speedup! All you need to do is change `pig_latinnify` to:
@@ -98,7 +98,7 @@ This gives a 4x speedup! All you need to do is change `pig_latinnify` to:
 #[polars_expr(output_type=String)]
 fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &StringChunked = inputs[0].str()?;
-    let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
+    let out: StringChunked = ca.apply_into_string_amortized(|value: &str, output: &mut String| {
         if let Some(first_char) = value.chars().next() {
             write!(output, "{}{}ay", &value[1..], first_char).unwrap()
         }

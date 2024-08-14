@@ -59,7 +59,7 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
-`apply_amortized` is a bit like the `apply_to_buffer` function we used in [How to STRING something together],
+`apply_amortized` is a bit like the `apply_into_string_amortized` function we used in [How to STRING something together],
 in that it makes a big allocation upfront to amortize the allocation costs. Think of it as a list version
 of `apply_values`, where each element is itself a `Series`.
 

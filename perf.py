@@ -16,34 +16,43 @@ df = df.with_row_index().with_columns(
 )
 """
 
-results = np.array(timeit.Timer(
-    stmt="df.select(pl.col('a').mp.abs_i64_fast())",
-    setup=setup,
+results = (
+    np.array(
+        timeit.Timer(
+            stmt="df.select(pl.col('a').mp.abs_i64_fast())",
+            setup=setup,
+        ).repeat(7, 3)
     )
-    .repeat(7, 3)
-)/3
-print(f'min: {min(results)}')
-print(f'max: {max(results)}')
-print(f'{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}')
+    / 3
+)
+print(f"min: {min(results)}")
+print(f"max: {max(results)}")
+print(f"{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}")
 
-results = np.array(timeit.Timer(
-    stmt="df.select(pl.col('a').mp.abs_i64())",
-    setup=setup,
+results = (
+    np.array(
+        timeit.Timer(
+            stmt="df.select(pl.col('a').mp.abs_i64())",
+            setup=setup,
+        ).repeat(7, 3)
     )
-    .repeat(7, 3)
-)/3
-print(f'min: {min(results)}')
-print(f'max: {max(results)}')
-print(f'{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}')
+    / 3
+)
+print(f"min: {min(results)}")
+print(f"max: {max(results)}")
+print(f"{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}")
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    results = np.array(timeit.Timer(
-        stmt="df.select(pl.col('a').map_elements(lambda x: abs(x)))",
-        setup=setup,
+    results = (
+        np.array(
+            timeit.Timer(
+                stmt="df.select(pl.col('a').map_elements(lambda x: abs(x)))",
+                setup=setup,
+            ).repeat(7, 3)
         )
-        .repeat(7, 3)
-    )/3
-print(f'min: {min(results)}')
-print(f'max: {max(results)}')
-print(f'{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}')
+        / 3
+    )
+print(f"min: {min(results)}")
+print(f"max: {max(results)}")
+print(f"{np.mean(results)} +/- {np.std(results)/np.sqrt(len(results))}")

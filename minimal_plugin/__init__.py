@@ -1,14 +1,19 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import polars as pl
 from pathlib import Path
-from polars.type_aliases import IntoExpr
 from minimal_plugin.utils import register_plugin, parse_version
 
 if parse_version(pl.__version__) < parse_version("0.20.16"):
-    from polars.utils.udfs import _get_shared_lib_location
+    from polars.utils.udfs import _get_shared_lib_location  # type: ignore[missing-import]
 
     lib: str | Path = _get_shared_lib_location(__file__)
 else:
     lib = Path(__file__).parent
+
+if TYPE_CHECKING:
+    from minimal_plugin.typing import IntoExpr
 
 
 def noop(expr: IntoExpr) -> pl.Expr:
@@ -140,6 +145,7 @@ def interpolate(expr: IntoExpr) -> pl.Expr:
         symbol="interpolate",
         is_elementwise=False,
     )
+
 
 def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
     return register_plugin(

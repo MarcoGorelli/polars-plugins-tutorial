@@ -24,8 +24,8 @@ def shift_struct(expr: IntoExpr) -> pl.Expr:
 On the Rust side, we need to start by activating the necessary
 feature - in `Cargo.toml`, please make this change:
 ```diff
--polars = { version = "0.41.3", default-features = false }
-+polars = { version = "0.41.3", features=["dtype-struct"], default-features = false }
+-polars = { version = "0.42.0", default-features = false }
++polars = { version = "0.42.0", features=["dtype-struct"], default-features = false }
 ```
 
 Then, we need to get the schema right.

@@ -219,7 +219,6 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
-// Temporarily commented out as I can't get them to compile
 fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
     match field.data_type() {

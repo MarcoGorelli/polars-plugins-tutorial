@@ -1,5 +1,4 @@
 mod expressions;
-mod utils;
 
 #[cfg(target_os = "linux")]
 use jemallocator::Jemalloc;

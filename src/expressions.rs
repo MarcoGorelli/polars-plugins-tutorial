@@ -169,7 +169,7 @@ struct AddSuffixKwargs {
 fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.str()?;
-    let out = ca.apply_to_buffer(|value, output| {
+    let out = ca.apply_into_string_amortized(|value, output| {
         write!(output, "{}{}", value, kwargs.suffix).unwrap();
     });
     Ok(out.into_series())
@@ -181,7 +181,7 @@ fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series
 // fn snowball_stem(inputs: &[Series]) -> PolarsResult<Series> {
 //     let ca: &StringChunked = inputs[0].str()?;
 //     let en_stemmer = Stemmer::create(Algorithm::English);
-//     let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
+//     let out: StringChunked = ca.apply_into_string_amortized(|value: &str, output: &mut String| {
 //         write!(output, "{}", en_stemmer.stem(value)).unwrap()
 //     });
 //     Ok(out.into_series())
@@ -219,6 +219,7 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
+// Temporarily commented out as I can't get them to compile
 fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
     match field.data_type() {
@@ -241,7 +242,7 @@ fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
 #[polars_expr(output_type_func=shifted_struct)]
 fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
     let struct_ = inputs[0].struct_()?;
-    let fields = struct_.fields();
+    let fields = struct_.fields_as_series();
     if fields.is_empty() {
         return Ok(inputs[0].clone());
     }
@@ -257,7 +258,7 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect::<Vec<_>>();
     fields.push(field_0);
-    StructChunked::new(struct_.name(), &fields).map(|ca| ca.into_series())
+    StructChunked::from_series(struct_.name(), &fields).map(|ca| ca.into_series())
 }
 
 use polars_arrow::array::MutablePlString;
@@ -414,7 +415,7 @@ where
         }
 
         let array = PrimitiveArray::new(
-            T::get_dtype().to_arrow(true),
+            T::get_dtype().to_arrow(CompatLevel::newest()),
             out.into(),
             Some(validity.into()),
         );

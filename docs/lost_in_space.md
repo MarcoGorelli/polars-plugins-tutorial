@@ -35,7 +35,7 @@ for longitude) and producing a String output column.
 
 ## Binary elementwise apply to buffer
 
-In [How to STRING something together], we learned how to use `StringChunked.apply_to_buffer`
+In [How to STRING something together], we learned how to use `StringChunked.apply_into_string_amortized`
 to run an elementwise function on a String column. Does Polars have a binary version of that one
 which allows us to start from any data type?
 

@@ -49,7 +49,7 @@ which is going to be very similar to the good version of `pig_latinnify`:
 fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.str()?;
-    let out = ca.apply_to_buffer(|value, output| {
+    let out = ca.apply_into_string_amortized(|value, output| {
         write!(output, "{}{}", value, kwargs.suffix).unwrap();
     });
     Ok(out.into_series())

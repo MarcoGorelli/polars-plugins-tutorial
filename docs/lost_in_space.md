@@ -62,43 +62,24 @@ use reverse_geocoder::ReverseGeocoder;
 
 #[polars_expr(output_type=String)]
 fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
-    let lat = inputs[0].f64()?;
-    let lon = inputs[1].f64()?;
+    let binding = inputs[0].struct_()?.field_by_name("lat")?;
+    let latitude = binding.f64()?;
+    let binding = inputs[0].struct_()?.field_by_name("lon")?;
+    let longitude = binding.f64()?;
     let geocoder = ReverseGeocoder::new();
-
-    let (lhs, rhs) = align_chunks_binary(lat, lon);
-    let chunks = lhs
-        .downcast_iter()
-        .zip(rhs.downcast_iter())
-        .map(|(lat_arr, lon_arr)| {
-            let mut mutarr = MutablePlString::with_capacity(lat_arr.len());
-
-            for (lat_opt_val, lon_opt_val) in lat_arr.iter().zip(lon_arr.iter()) {
-                match (lat_opt_val, lon_opt_val) {
-                    (Some(lat_val), Some(lon_val)) => {
-                        let res = &geocoder.search((*lat_val, *lon_val)).record.name;
-                        mutarr.push(Some(res))
-                    }
-                    _ => mutarr.push_null(),
-                }
-            }
-
-            mutarr.freeze().boxed()
-        })
-        .collect();
-    let out: StringChunked = unsafe { ChunkedArray::from_chunks("placeholder", chunks) };
+    let out = binary_elementwise_into_string_amortized(latitude, longitude, |lhs, rhs, out| {
+        let search_result = geocoder.search((lhs, rhs));
+        write!(out, "{}", search_result.record.name).unwrap();
+    });
     Ok(out.into_series())
 }
 ```
-That's a bit of a mouthful, so let's try to make sense of it.
 
-- As we learned about in [Prerequisites], Polars Series are backed by chunked arrays.
-  `align_chunks_binary` just ensures that the chunks have the same lengths. It may need
-  to rechunk under the hood for us;
-- `downcast_iter` returns an iterator of Arrow Arrays. Using `zip`, we iterate over
-  respective pairs of Arrow Arrays from `lhs` and `rhs`
-- to learn about `MutablePlString`, please read
-  [Why we have rewritten our String type](https://pola.rs/posts/polars-string-type/)
+We use the utility function `binary_elementwise_into_string_amortized`,
+which is a binary version of `apply_into_string_amortized` which we learned
+about in the [Stringify] chapter.
+
+  [Stringify]: ../stringify/
 
 To run it, put the following in `run.py`:
 ```python

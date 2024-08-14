@@ -1,16 +1,18 @@
 #![allow(clippy::unused_unit)]
 use polars::export::num::{NumCast, Zero};
-use polars::prelude::arity::broadcast_binary_elementwise;
+use polars::prelude::arity::{
+    binary_elementwise_into_string_amortized, broadcast_binary_elementwise,
+};
 use polars::prelude::*;
 use polars_arrow::bitmap::MutableBitmap;
+use polars_core::series::amortized_iter::AmortSeries;
+use polars_core::utils::align_chunks_binary;
 use pyo3_polars::derive::polars_expr;
 use pyo3_polars::export::polars_core::export::num::Signed;
 use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
 use serde::Deserialize;
 use std::ops::{Add, Div, Mul, Sub};
-
-use crate::utils::binary_amortized_elementwise;
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -111,39 +113,6 @@ fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
-// #[polars_expr(output_type=String)]
-// fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
-//     let binding = inputs[0].struct_()?.field_by_name("lat")?;
-//     let latitude = binding.f64()?;
-//     let binding = inputs[0].struct_()?.field_by_name("lon")?;
-//     let longitude = binding.f64()?;
-//     let geocoder = ReverseGeocoder::new();
-//     let (lhs, rhs) = align_chunks_binary(latitude, longitude);
-//     let iter = lhs.downcast_iter().zip(rhs.downcast_iter()).map(
-//         |(lhs_arr, rhs_arr)| -> LargeStringArray {
-//             let mut buf = String::new();
-//             let mut mutarr: MutableUtf8Array<i64> =
-//                 MutableUtf8Array::with_capacities(lhs_arr.len(), lhs_arr.len() * 20);
-
-//             for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
-//                 match (lhs_opt_val, rhs_opt_val) {
-//                     (Some(lhs_val), Some(rhs_val)) => {
-//                         buf.clear();
-//                         let search_result = geocoder.search((*lhs_val, *rhs_val));
-//                         write!(buf, "{}", search_result.record.name).unwrap();
-//                         mutarr.push(Some(&buf))
-//                     }
-//                     _ => mutarr.push_null(),
-//                 }
-//             }
-//             let arr: Utf8Array<i64> = mutarr.into();
-//             arr
-//         },
-//     );
-//     let out = StringChunked::from_chunk_iter(lhs.name(), iter);
-//     Ok(out.into_series())
-// }
-
 #[polars_expr(output_type=Int64)]
 fn abs_i64_fast(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
@@ -187,6 +156,28 @@ fn add_suffix(inputs: &[Series], kwargs: AddSuffixKwargs) -> PolarsResult<Series
 //     Ok(out.into_series())
 // }
 
+fn binary_amortized_elementwise<'a, T, K, F>(
+    lhs: &'a ListChunked,
+    rhs: &'a ListChunked,
+    mut f: F,
+) -> ChunkedArray<T>
+where
+    T: PolarsDataType,
+    T::Array: ArrayFromIter<Option<K>>,
+    F: FnMut(&AmortSeries, &AmortSeries) -> Option<K> + Copy,
+{
+    {
+        let (lhs, rhs) = align_chunks_binary(lhs, rhs);
+        lhs.amortized_iter()
+            .zip(rhs.amortized_iter())
+            .map(|(lhs, rhs)| match (lhs, rhs) {
+                (Some(lhs), Some(rhs)) => f(&lhs, &rhs),
+                _ => None,
+            })
+            .collect_ca(lhs.name())
+    }
+}
+
 #[polars_expr(output_type=Float64)]
 fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let values = inputs[0].list()?;
@@ -195,9 +186,9 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let out: Float64Chunked = binary_amortized_elementwise(
         values,
         weights,
-        |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
-            let values_inner = values_inner.i64().unwrap();
-            let weights_inner = weights_inner.f64().unwrap();
+        |values_inner: &AmortSeries, weights_inner: &AmortSeries| -> Option<f64> {
+            let values_inner = values_inner.as_ref().i64().unwrap();
+            let weights_inner = weights_inner.as_ref().f64().unwrap();
             if values_inner.is_empty() {
                 // Mirror Polars, and return None for empty mean.
                 return None;
@@ -260,40 +251,19 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
     StructChunked::from_series(struct_.name(), &fields).map(|ca| ca.into_series())
 }
 
-use polars_arrow::array::MutablePlString;
-use polars_core::utils::align_chunks_binary;
 use reverse_geocoder::ReverseGeocoder;
 
 #[polars_expr(output_type=String)]
 fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
-    let lhs = inputs[0].f64()?;
-    let rhs = inputs[1].f64()?;
+    let binding = inputs[0].struct_()?.field_by_name("lat")?;
+    let latitude = binding.f64()?;
+    let binding = inputs[0].struct_()?.field_by_name("lon")?;
+    let longitude = binding.f64()?;
     let geocoder = ReverseGeocoder::new();
-
-    let (lhs, rhs) = align_chunks_binary(lhs, rhs);
-    let chunks = lhs
-        .downcast_iter()
-        .zip(rhs.downcast_iter())
-        .map(|(lhs_arr, rhs_arr)| {
-            let mut buf = String::new();
-            let mut mutarr = MutablePlString::with_capacity(lhs_arr.len());
-
-            for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
-                match (lhs_opt_val, rhs_opt_val) {
-                    (Some(lhs_val), Some(rhs_val)) => {
-                        let res = &geocoder.search((*lhs_val, *rhs_val)).record.name;
-                        buf.clear();
-                        write!(buf, "{res}").unwrap();
-                        mutarr.push(Some(&buf))
-                    }
-                    _ => mutarr.push_null(),
-                }
-            }
-
-            mutarr.freeze().boxed()
-        })
-        .collect();
-    let out: StringChunked = unsafe { ChunkedArray::from_chunks(lhs.name(), chunks) };
+    let out = binary_elementwise_into_string_amortized(latitude, longitude, |lhs, rhs, out| {
+        let search_result = geocoder.search((lhs, rhs));
+        write!(out, "{}", search_result.record.name).unwrap();
+    });
     Ok(out.into_series())
 }
 

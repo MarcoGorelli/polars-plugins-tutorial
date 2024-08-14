@@ -50,22 +50,47 @@ def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
     )
 ```
 
-On the Rust side, we'll make use of `binary_amortized_elementwise`, which you
-can find in `src/utils.rs` (if you followed the instructions in [Prerequisites]).
-Don't worry about understanding it.
-Some of its details (such as `.as_ref()` to get a `Series` out of an `UnstableSeries`) are
-optimizations with some gotchas - unless you really know what you're doing, I'd suggest
-just using `binary_amortized_elementwise` directly. Hopefully a utility like this
-can be added to Polars itself, so that plugin authors won't need to worry about it.
+On the Rust side, we'll define a helper function which will let us work with
+pairs of list chunked arrays:
 
-To use it, just add
 ```rust
-use crate::utils::binary_amortized_elementwise;
+fn binary_amortized_elementwise<'a, T, K, F>(
+    lhs: &'a ListChunked,
+    rhs: &'a ListChunked,
+    mut f: F,
+) -> ChunkedArray<T>
+where
+    T: PolarsDataType,
+    T::Array: ArrayFromIter<Option<K>>,
+    F: FnMut(&AmortSeries, &AmortSeries) -> Option<K> + Copy,
+{
+    {
+        let (lhs, rhs) = align_chunks_binary(lhs, rhs);
+        lhs.amortized_iter()
+            .zip(rhs.amortized_iter())
+            .map(|(lhs, rhs)| match (lhs, rhs) {
+                (Some(lhs), Some(rhs)) => f(&lhs, &rhs),
+                _ => None,
+            })
+            .collect_ca(lhs.name())
+    }
+}
 ```
-to the top of `src/expressions.rs`, after the previous imports.
 
-We just need to write a function which accepts two `Series`, computes their dot product, and then
-divides by the sum of the weights:
+That's a bit of a mouthful, so let's try to make sense of it.
+
+- As we learned about in [Prerequisites], Polars Series are backed by chunked arrays.
+  `align_chunks_binary` just ensures that the chunks have the same lengths. It may need
+  to rechunk under the hood for us;
+- `amortized_iter` returns an iterator of `AmortSeries`, each of which corresponds
+  to a row from our input.
+
+We'll explain more about `AmortSeries` in a future iteration of this tutorial.
+For now, let's just look at how to use this utility:
+
+- we pass it `ListChunked` as inputs;
+- we also pass a function which takes two `AmortSeries` and produces a scalar
+  value.
 
 ```rust
 #[polars_expr(output_type=Float64)]
@@ -76,9 +101,9 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let out: Float64Chunked = binary_amortized_elementwise(
         values,
         weights,
-        |values_inner: &Series, weights_inner: &Series| -> Option<f64> {
-            let values_inner = values_inner.i64().unwrap();
-            let weights_inner = weights_inner.f64().unwrap();
+        |values_inner: &AmortSeries, weights_inner: &AmortSeries| -> Option<f64> {
+            let values_inner = values_inner.as_ref().i64().unwrap();
+            let weights_inner = weights_inner.as_ref().f64().unwrap();
             if values_inner.len() == 0 {
                 // Mirror Polars, and return None for empty mean.
                 return None
@@ -101,13 +126,12 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 
-Note: this function has some limitations:
+If you just need to get a problem solved, this function works! But let's note its
+limitations:
 
 - it assumes that each inner element of `values` and `weights` has the same
   length - it would be better to raise an error if this assumption is not met
-- it only accepts `Int64` values () (see section 2 for how you could make it more generic).
-
-Nonetheless, if you just need to get a problem solved, it works!
+- it only accepts `Int64` values (see section 2 for how you could make it more generic).
 
 To try it out, we compile with `maturin develop` (or `maturin develop --release` if you're 
 benchmarking), and then we should be able to run `run.py`:

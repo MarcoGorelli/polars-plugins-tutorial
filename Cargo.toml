@@ -22,8 +22,8 @@ polars-sql = { version = "0.42.0", default-features = false }
 reverse_geocoder = "4.1.1"
 # rust-stemmers = "1.2.0"
 
-[patch.crates-io]
-pyo3-polars = { git = 'https://github.com/MarcoGorelli/pyo3-polars.git', rev='a0327ec121986711aec32dc1e52234838bf3b25b' }
+# [patch.crates-io]
+# pyo3-polars = { git = 'https://github.com/MarcoGorelli/pyo3-polars.git', rev='a0327ec121986711aec32dc1e52234838bf3b25b' }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 jemallocator = { version = "0.5", features = ["disable_initial_exec_tls"] }

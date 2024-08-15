@@ -44,7 +44,7 @@ jobs:
       - uses: mozilla-actions/sccache-action@v0.0.3
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv venv
-      - run: . .venv/bin/activate
+      - run: . .venv/bin/activate && uv pip install -r requirements.txt -r requirements-dev.txt
       - run: make pre-commit
       - run: make install
       - run: make test

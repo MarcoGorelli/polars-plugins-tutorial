@@ -1,4 +1,6 @@
 #![allow(clippy::unused_unit)]
+use std::ops::{Add, Div, Mul, Sub};
+
 use polars::export::num::{NumCast, Zero};
 use polars::prelude::arity::{
     binary_elementwise_into_string_amortized, broadcast_binary_elementwise,
@@ -12,7 +14,6 @@ use pyo3_polars::export::polars_core::export::num::Signed;
 use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
 use serde::Deserialize;
-use std::ops::{Add, Div, Mul, Sub};
 
 fn same_output_type(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -54,7 +55,7 @@ fn abs_numeric(inputs: &[Series]) -> PolarsResult<Series> {
         dtype => {
             polars_bail!(InvalidOperation:format!("dtype {dtype} not \
             supported for abs_numeric, expected Int32, Int64, Float32, Float64."))
-        }
+        },
     }
 }
 
@@ -84,7 +85,7 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
             Some(x) => {
                 *state += x;
                 Some(Some(*state))
-            }
+            },
             None => Some(None),
         })
         .collect_trusted();
@@ -224,7 +225,7 @@ fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
                 .collect::<Vec<_>>();
             fields.push(field_0);
             Ok(Field::new(&name, DataType::Struct(fields)))
-        }
+        },
         _ => unreachable!(),
     }
 }

@@ -23,12 +23,14 @@ def shift_struct(expr: IntoExpr) -> pl.Expr:
 
 On the Rust side, we need to start by activating the necessary
 feature - in `Cargo.toml`, please make this change:
+
 ```diff
 -polars = { version = "0.42.0", default-features = false }
 +polars = { version = "0.42.0", features=["dtype-struct"], default-features = false }
 ```
 
 Then, we need to get the schema right.
+
 ```Rust
 fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
@@ -49,6 +51,7 @@ fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     }
 }
 ```
+
 In this case, I put the first field's name as the output struct's name, but it doesn't
 really matter what we put, as Polars doesn't allow us to rename expressions within
 plugins. You can always rename on the Python side if you really want to, but I'd suggest
@@ -60,7 +63,7 @@ The function definition is going to follow a similar logic:
 #[polars_expr(output_type_func=shifted_struct)]
 fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
     let struct_ = inputs[0].struct_()?;
-    let fields = struct_.fields();
+    let fields = struct_.fields_as_series();
     if fields.is_empty() {
         return Ok(inputs[0].clone());
     }
@@ -114,12 +117,15 @@ shape: (3, 2)
 
 The values look right - but is the schema?
 Let's take a look
+
 ```
 import pprint
 pprint.pprint(df.with_columns(abc_shifted=mp.shift_struct("abc")).schema)
 ```
+
 ```
 OrderedDict([('abc', Struct({'a': Int64, 'b': Float64, 'c': String})),
              ('abc_shifted', Struct({'a': Float64, 'b': String, 'c': Int64}))])
 ```
+
 Looks correct!

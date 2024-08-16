@@ -1438,8 +1438,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-polars"
-version = "0.16.0"
-source = "git+https://github.com/MarcoGorelli/pyo3-polars.git?rev=a0327ec121986711aec32dc1e52234838bf3b25b#a0327ec121986711aec32dc1e52234838bf3b25b"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4888d52962f8433717f7ea7ab86c420720f2d89c00aa5712ec4d9353facb1ef"
 dependencies = [
  "libc",
  "once_cell",
@@ -1457,7 +1458,8 @@ dependencies = [
 [[package]]
 name = "pyo3-polars-derive"
 version = "0.10.0"
-source = "git+https://github.com/MarcoGorelli/pyo3-polars.git?rev=a0327ec121986711aec32dc1e52234838bf3b25b#a0327ec121986711aec32dc1e52234838bf3b25b"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ec018e2563ba4e42b7311c84b10da132c10a56bf91bd2cddd45ffb985becb9c"
 dependencies = [
  "polars-core",
  "polars-ffi",

@@ -76,7 +76,7 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect::<Vec<_>>();
     fields.push(field_0);
-    StructChunked::new(struct_.name(), &fields).map(|ca| ca.into_series())
+    StructChunked::from_series(struct_.name(), &fields).map(|ca| ca.into_series())
 }
 ```
 

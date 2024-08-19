@@ -28,11 +28,11 @@ print(
     )
 )
 
-#df = pl.DataFrame(
-#    {
-#        "a": [None, None, 3, None, None, 9, 11, None],
-#    }
-#)
-#result = df.with_columns(interpolate=mp.interpolate("a"))
-#print(result)
+df = pl.DataFrame(
+    {
+        "a": [None, None, 3, None, None, 9, 11, None],
+    }
+)
+result = df.with_columns(interpolate=mp.interpolate("a"))
+print(result)
 

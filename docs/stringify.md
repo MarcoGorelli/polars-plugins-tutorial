@@ -143,13 +143,7 @@ fn remove_extension(inputs: &[Series]) -> PolarsResult<Series> {
 }
 ```
 3. Otherwise we only need one more piece of information: if the function operates __on a `String`__ to produce a `String`, `apply_to_buffer` should be preferred. An example for that is the `pig_latinnify` from the previous section.
-4. Otherwise, if it's any other PolarsDataType ("Any") to `String`, you'll want `apply_to_string_amortized`. Yes, it sounds like the input should be a `String`, but that's referring to the output. Here's an example:
-```rust
-// example once the PR is merged
-// ref:
-// - https://github.com/pola-rs/polars/pull/17670
-```
-
+4. Otherwise, if it's any other PolarsDataType ("Any") to `String`, you'll want `apply_to_string_amortized`.
 
 Here's a cheatsheet (remember, the output type is always String):
 

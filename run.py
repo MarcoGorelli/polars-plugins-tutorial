@@ -1,9 +1,7 @@
-import polars as pl
-import minimal_plugin as mp
-
 
 import polars as pl
 import minimal_plugin as mp
+
 
 df = pl.DataFrame(
     {"values": [[1, 3, 2], [5, 7], []], "weights": [[0.5, 0.3, 0.2], [0.1, 0.9], []]}
@@ -37,3 +35,4 @@ df = pl.DataFrame(
 )
 result = df.with_columns(interpolate=mp.interpolate("a"))
 print(result)
+

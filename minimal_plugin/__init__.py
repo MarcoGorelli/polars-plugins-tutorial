@@ -3,154 +3,157 @@ from typing import TYPE_CHECKING
 
 import polars as pl
 from pathlib import Path
-from minimal_plugin.utils import register_plugin, parse_version
 
-if parse_version(pl.__version__) < parse_version("0.20.16"):
-    from polars.utils.udfs import _get_shared_lib_location  # type: ignore[missing-import]
+from polars.plugins import register_plugin_function
 
-    lib: str | Path = _get_shared_lib_location(__file__)
-else:
-    lib = Path(__file__).parent
+
+LIB = Path(__file__).parent
 
 if TYPE_CHECKING:
     from minimal_plugin.typing import IntoExpr
 
 
 def noop(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="noop",
+        plugin_path=LIB,
+        function_name="noop",
         is_elementwise=True,
     )
 
 
 def abs_i64(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="abs_i64",
+        plugin_path=LIB,
+        function_name="abs_i64",
         is_elementwise=True,
     )
 
 
 def abs_numeric(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="abs_numeric",
+        plugin_path=LIB,
+        function_name="abs_numeric",
         is_elementwise=True,
     )
 
 
 def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr, other],
-        lib=lib,
-        symbol="sum_i64",
+        plugin_path=LIB,
+        function_name="sum_i64",
         is_elementwise=True,
     )
 
 
 def cum_sum(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="cum_sum",
+        plugin_path=LIB,
+        function_name="cum_sum",
         is_elementwise=False,
     )
 
 
 def pig_latinnify(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="pig_latinnify",
+        plugin_path=LIB,
+        function_name="pig_latinnify",
         is_elementwise=True,
     )
 
 
 def abs_i64_fast(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="abs_i64_fast",
+        plugin_path=LIB,
+        function_name="abs_i64_fast",
         is_elementwise=True,
     )
 
 
 def add_suffix(expr: IntoExpr, *, suffix: str) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="add_suffix",
+        plugin_path=LIB,
+        function_name="add_suffix",
         is_elementwise=True,
         kwargs={"suffix": suffix},
     )
 
 
 def snowball_stem(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="snowball_stem",
+        plugin_path=LIB,
+        function_name="snowball_stem",
         is_elementwise=True,
     )
 
 
 def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr, weights],
-        lib=lib,
-        symbol="weighted_mean",
+        plugin_path=LIB,
+        function_name="weighted_mean",
         is_elementwise=True,
     )
 
 
 def shift_struct(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="shift_struct",
+        plugin_path=LIB,
+        function_name="shift_struct",
         is_elementwise=True,
     )
 
 
 def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
-    return register_plugin(
-        args=[lat, long], lib=lib, symbol="reverse_geocode", is_elementwise=True
+    return register_plugin_function(
+        args=[lat, long],
+        plugin_path=LIB,
+        function_name="reverse_geocode",
+        is_elementwise=True,
     )
 
 
 def non_zero_indices(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
-        args=[expr], lib=lib, symbol="non_zero_indices", is_elementwise=True
+    return register_plugin_function(
+        args=[expr],
+        plugin_path=LIB,
+        function_name="non_zero_indices",
+        is_elementwise=True,
     )
 
 
 def vertical_weighted_mean(values: IntoExpr, weights: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[values, weights],
-        lib=lib,
-        symbol="vertical_weighted_mean",
+        plugin_path=LIB,
+        function_name="vertical_weighted_mean",
         is_elementwise=False,
         returns_scalar=True,
     )
 
 
 def interpolate(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="interpolate",
+        plugin_path=LIB,
+        function_name="interpolate",
         is_elementwise=False,
     )
 
 
 def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[left, mid, right],
-        lib=lib,
-        symbol="life_step",
+        plugin_path=LIB,
+        function_name="life_step",
         is_elementwise=False,
     )

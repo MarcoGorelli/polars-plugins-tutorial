@@ -68,10 +68,10 @@ def pig_latinnify(expr: IntoExpr) -> pl.Expr:
 
 
 def remove_extension(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="remove_extension",
+        plugin_path=LIB,
+        function_name="remove_extension",
         is_elementwise=True,
     )
 

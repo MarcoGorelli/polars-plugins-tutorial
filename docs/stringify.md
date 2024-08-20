@@ -117,12 +117,12 @@ _Thinking about allocations_ can really make a difference!
 Consider a user defined function (_that produces a  `String`_) to be applied to the elements of an input Series, e.g., append a suffix, convert to lowercase, etc. To apply that function, it's very likely your choice will be one of:
 
 - `apply_values`
-- `apply_to_buffer`
-- `apply_to_buffer_generic`
+- `apply_into_string_amortized`
 
-All of them would probably work, as they're all essentially just mapping values. However, by choosing blindly, you might be missing some performance gains. To determine the most efficient method to be used:  
-1. Ask yourself: does the applied function allocate memory? If the answer is __yes__, the difference is negligible, use whichever method you prefer.  
-2. If it's not allocating, ask yourself again: is the function simply slicing the input? If so, `apply_values` with `Cow::Borrowed` should be the winner:  
+To decide between them, ask yourself: does the applied function allocate memory on the heap? (e.g., is it allocating a `String`?)
+
+1. If the answer is __yes__, `apply_into_string_amortized` can help amortise the cost of such allocations by repeatedly writing to the same `String` object (example usage in the previous section).  
+2. If it's not allocating, e.g., the function is simply slicing the input, `apply_values` with `Cow::Borrowed` should be the winner:  
 ```rust
 fn remove_last_extension(s: &str) -> &str {
     match s.rfind('.') {
@@ -142,16 +142,4 @@ fn remove_extension(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 ```
-3. Otherwise we only need one more piece of information: if the function operates __on a `String`__ to produce a `String`, `apply_to_buffer` should be preferred. An example for that is the `pig_latinnify` from the previous section.
-4. Otherwise, if it's any other PolarsDataType ("Any") to `String`, you'll want `apply_to_string_amortized`.
 
-Here's a cheatsheet (remember, the output type is always String):
-
-| Allocates | Only slices   | Input type | What to use?                          |
-|-----------|---------------|------------|---------------------------------------|
-| Yes       | N/A           | N/A        | Whatever you prefer                   |
-| No        | Yes           | String     | `apply_values` with `Cow::Borrowed`   |
-| No        | No            | String     | `apply_to_buffer`                     |
-| No        | No            | Any¹       | `apply_to_buffer_generic`             |
-
-¹ Any `PolarsDataType`

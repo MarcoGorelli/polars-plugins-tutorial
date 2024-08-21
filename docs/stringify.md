@@ -112,34 +112,30 @@ _Thinking about allocations_ can really make a difference!
 
 ## So let's think about allocations!
 
-### Choosing a method to apply a custom function
+If you have an elementwise function which produces `String` output, then chances are it does one of the following:
 
-Consider a user defined function (_that produces a  `String`_) to be applied to the elements of an input Series, e.g., append a suffix, convert to lowercase, etc. To apply that function, it's very likely your choice will be one of:
+- Creates a new string. In this case, you can use `apply_into_string_amortized` to amortise the cost of allocating a new string for each input row,
+  as we did above in `pig_latinnify`. This works by allocating a `String` upfront and then repeatedly re-writing to it.
+- Slices the original string. In this case, you can use `apply_values` with `Cow::Borrowed`, for example:
 
-- `apply_values`
-- `apply_into_string_amortized`
-
-To decide between them, ask yourself: does the applied function allocate memory on the heap? (e.g., is it allocating a `String`?)
-
-1. If the answer is __yes__, `apply_into_string_amortized` can help amortise the cost of such allocations by repeatedly writing to the same `String` object (example usage in the previous section).  
-2. If it's not allocating, e.g., the function is simply slicing the input, `apply_values` with `Cow::Borrowed` should be the winner:  
-```rust
-fn remove_last_extension(s: &str) -> &str {
-    match s.rfind('.') {
-        Some(pos) => &s[..pos],
-        None => s,
+    ```rust
+    fn remove_last_extension(s: &str) -> &str {
+        match s.rfind('.') {
+            Some(pos) => &s[..pos],
+            None => s,
+        }
     }
-}
 
-#[polars_expr(output_type=String)]
-fn remove_extension(inputs: &[Series]) -> PolarsResult<Series> {
-    let s = &inputs[0];
-    let ca = s.str()?;
-    let out: StringChunked = ca.apply_values(|val| {
-        let res = Cow::Borrowed(remove_last_extension(val));
-        res
-    });
-    Ok(out.into_series())
-}
-```
+    #[polars_expr(output_type=String)]
+    fn remove_extension(inputs: &[Series]) -> PolarsResult<Series> {
+        let s = &inputs[0];
+        let ca = s.str()?;
+        let out: StringChunked = ca.apply_values(|val| {
+            let res = Cow::Borrowed(remove_last_extension(val));
+            res
+        });
+        Ok(out.into_series())
+    }
+    ```
 
+There are low-level optimisations you can do to take things further, but - if in doubt - `apply_into_string_amortized` / `binary_elementwise_into_string_amortized` are probably good enough.

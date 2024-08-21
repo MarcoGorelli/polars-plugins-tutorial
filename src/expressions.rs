@@ -114,6 +114,24 @@ fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
+fn remove_last_extension(s: &str) -> &str {
+    match s.rfind('.') {
+        Some(pos) => &s[..pos],
+        None => s,
+    }
+}
+
+#[polars_expr(output_type=String)]
+fn remove_extension(inputs: &[Series]) -> PolarsResult<Series> {
+    let s = &inputs[0];
+    let ca = s.str()?;
+    let out: StringChunked = ca.apply_values(|val| {
+        let res = Cow::Borrowed(remove_last_extension(val));
+        res
+    });
+    Ok(out.into_series())
+}
+
 #[polars_expr(output_type=Int64)]
 fn abs_i64_fast(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];

@@ -108,4 +108,34 @@ fn pig_latinnify(inputs: &[Series]) -> PolarsResult<Series> {
 ```
 
 Simpler, faster, and more memory-efficient.
-Thinking about allocations can really make a difference!
+_Thinking about allocations_ can really make a difference!
+
+## So let's think about allocations!
+
+If you have an elementwise function which produces `String` output, then chances are it does one of the following:
+
+- Creates a new string. In this case, you can use `apply_into_string_amortized` to amortise the cost of allocating a new string for each input row,
+  as we did above in `pig_latinnify`. This works by allocating a `String` upfront and then repeatedly re-writing to it.
+- Slices the original string. In this case, you can use `apply_values` with `Cow::Borrowed`, for example:
+
+    ```rust
+    fn remove_last_extension(s: &str) -> &str {
+        match s.rfind('.') {
+            Some(pos) => &s[..pos],
+            None => s,
+        }
+    }
+
+    #[polars_expr(output_type=String)]
+    fn remove_extension(inputs: &[Series]) -> PolarsResult<Series> {
+        let s = &inputs[0];
+        let ca = s.str()?;
+        let out: StringChunked = ca.apply_values(|val| {
+            let res = Cow::Borrowed(remove_last_extension(val));
+            res
+        });
+        Ok(out.into_series())
+    }
+    ```
+
+There are low-level optimisations you can do to take things further, but - if in doubt - `apply_into_string_amortized` / `binary_elementwise_into_string_amortized` are probably good enough.

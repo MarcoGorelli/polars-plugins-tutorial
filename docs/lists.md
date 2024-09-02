@@ -97,6 +97,14 @@ For now, let's just look at how to use this utility:
 fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let values = inputs[0].list()?;
     let weights = &inputs[1].list()?;
+    polars_ensure!(
+        values.dtype() == &DataType::List(Box::new(DataType::Int64)),
+        ComputeError: "Expected `values` to be of type `List(Int64)`, got: {}", values.dtype()
+    );
+    polars_ensure!(
+        weights.dtype() == &DataType::List(Box::new(DataType::Float64)),
+        ComputeError: "Expected `weights` to be of type `List(Float64)`, got: {}", weights.dtype()
+    );
 
     let out: Float64Chunked = binary_amortized_elementwise(
         values,
@@ -131,7 +139,8 @@ limitations:
 
 - it assumes that each inner element of `values` and `weights` has the same
   length - it would be better to raise an error if this assumption is not met
-- it only accepts `Int64` values (see section 2 for how you could make it more generic).
+- it only accepts `Int64` `values` and `Float64` `weights`
+  (see section 2 for how you could make it more generic).
 
 To try it out, we compile with `maturin develop` (or `maturin develop --release` if you're 
 benchmarking), and then we should be able to run `run.py`:

@@ -201,6 +201,14 @@ where
 fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let values = inputs[0].list()?;
     let weights = &inputs[1].list()?;
+    polars_ensure!(
+        values.dtype() == &DataType::List(Box::new(DataType::Int64)),
+        ComputeError: "Expected `values` to be of type `List(Int64)`, got: {}", values.dtype()
+    );
+    polars_ensure!(
+        weights.dtype() == &DataType::List(Box::new(DataType::Float64)),
+        ComputeError: "Expected `weights` to be of type `List(Float64)`, got: {}", weights.dtype()
+    );
 
     let out: Float64Chunked = binary_amortized_elementwise(
         values,
@@ -292,6 +300,10 @@ fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
 #[polars_expr(output_type_func=list_idx_dtype)]
 fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].list()?;
+    polars_ensure!(
+        ca.dtype() == &DataType::List(Box::new(DataType::Int64)),
+        ComputeError: "Expected `List(Int64)`, got: {}", ca.dtype()
+    );
 
     let out: ListChunked = ca.apply_amortized(|s| {
         let s: &Series = s.as_ref();

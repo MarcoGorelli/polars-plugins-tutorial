@@ -201,6 +201,14 @@ where
 fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     let values = inputs[0].list()?;
     let weights = &inputs[1].list()?;
+    polars_ensure!(
+        values.dtype() == &DataType::List(Box::new(DataType::Int64)),
+        ComputeError: "Expected `values` to be of type `List(Int64)`, got: {}", values.dtype()
+    );
+    polars_ensure!(
+        values.dtype() == &DataType::List(Box::new(DataType::Float64)),
+        ComputeError: "Expected `values` to be of type `List(Float64)`, got: {}", weights.dtype()
+    );
 
     let out: Float64Chunked = binary_amortized_elementwise(
         values,

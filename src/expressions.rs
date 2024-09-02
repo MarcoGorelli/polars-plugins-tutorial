@@ -300,6 +300,10 @@ fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
 #[polars_expr(output_type_func=list_idx_dtype)]
 fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].list()?;
+    polars_ensure!(
+        ca.dtype() == &DataType::List(Box::new(DataType::Int64)),
+        ComputeError: "Expected `List(Int64)`, got: {}", ca.dtype()
+    );
 
     let out: ListChunked = ca.apply_amortized(|s| {
         let s: &Series = s.as_ref();

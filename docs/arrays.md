@@ -64,7 +64,7 @@ Turns out we _can_ do it! But it's a little bit tricky.
 Let's create a plugin that calculates the midpoint between a reference point and each point in a Series like the one above.
 This should illustrate both how to unpack an array inside our rust code and also return a Series of the same type.
 
-As usual, we start by registering our plugin:
+We'll start by registering our plugin:
 
 ```python
 def midpoint_2d(expr: IntoExpr, ref_point: tuple[float, float]) -> pl.Expr:
@@ -92,63 +92,58 @@ struct MidPoint2DKwargs {
 And we can finally move to the actual plugin code:
 
 ```rust
+// We need this to ensure the output is of dtype array.
+// Unfortunately, polars plugins do not support something similar to:
+// #[polars_expr(output_type=Array)]
+pub fn point_2d_output(_: &[Field]) -> PolarsResult<Field> {
+    Ok(Field::new(
+        "point_2d",
+        DataType::Array(Box::new(DataType::Float64), 2),
+    ))
+}
+
 #[polars_expr(output_type_func=point_2d_output)]
 fn midpoint_2d(inputs: &[Series], kwargs: MidPoint2DKwargs) -> PolarsResult<Series> {
-
     let ca: &ArrayChunked = inputs[0].array()?;
     let ref_point = kwargs.ref_point;
 
-    let out = unsafe {
-        ca.apply_amortized_same_type(|row| {
+    let out: Result<ArrayChunked, PolarsError> = unsafe {
+        ca.try_apply_amortized_same_type(|row| {
             let s = row.as_ref();
-            let ca = s.f64().unwrap();
-            let out_inner: Float64Chunked;
-            match (ca.get(0), ca.get(1)) {
-                (Some(_), Some(_)) => {
-                    out_inner = ca
-                        .into_no_null_iter()
-                        .enumerate()
-                        .map(|(idx, val)| {
-                            let midpoint = (val + ref_point[idx]) / 2.0f64;
-                            Some(midpoint)
-                        }).collect_trusted();
-                },
-                (_, _) => {
-                    out_inner = ca.clone();
-                },
-            }
-            out_inner.into_series()
-        })
-    };
+            let ca = s.f64()?;
+            let out_inner: Float64Chunked = ca
+                .iter()
+                .enumerate()
+                .map(|(idx, opt_val)| {
+                    opt_val.map(|val| {
+                        (val + ref_point[idx]) / 2.0f64
+                    })
+                }).collect_trusted();
+            Ok(out_inner.into_series())
+        })};
 
-    Ok(out.into_series())
+    Ok(out?.into_series())
 }
 ```
 
-Uh-oh, unsafe, run for the hil- No, wait! It's true that we need unsafe here, but let's not freak out.
-If we read the docs of `apply_amortized_same_type`, we see the following:
+Uh-oh, unsafe, run to the hil- No, wait! It's true that we need unsafe here, but let's not freak out.
+If we read the docs of `try_apply_amortized_same_type`, we see the following:
 
 > ### Safety
-> Return series of F must has the same dtype and number of elements as input.
+> Return series of F must has the same dtype and number of elements as input if it is Ok.
 
 In this example, we can uphold that contract - we know we're returning a Series with the same number of elements and same dtype as the input - take that, _unsafe_!
 
 Still, the code looks a bit scary, doesn't it? So let's break it down:
 
 ```rust
-// That part is given, we've been doing that for a while now - the only news is
-// the use of `.array()` instead of a type like i64(), etc.
-let ca: &ArrayChunked = inputs[0].array()?;
-// And this is just how we take kwargs, as we learned in the past
-let ref_point = kwargs.ref_point;
-```
+let out: Result<ArrayChunked, PolarsError> = unsafe {
 
-```rust
-let out = unsafe {
     // This is similar to apply_values, but it's amortized and made specifically
     // for scenarios in which we know both the return type and length will be
-    // the same as the input
-    ca.apply_amortized_same_type(|row| {
+    // the same as the input. Since it's the try_* version of the function, it
+    // also possibly handles the `?` we use in the closure later
+    ca.try_apply_amortized_same_type(|row| {
         // `row` is officially an AmortSeries. What does that mean? Shouldn't it
         // be a 2d array with simple element access? Unfortunately not, but at
         // least we're on the right track: it does indeed contain two elements
@@ -160,60 +155,39 @@ let out = unsafe {
         // Previously we've been doing this to unpack a column we had behind a
         // Series - this time, inside this closure, the Series contains the two
         // elements composing the "row" (x and y):
-        let ca = s.f64().unwrap();
+        let ca = s.f64()?;
 
-        // We declare this here because we'll assign to it inside the match
-        // statement below, but it'll be used outside it, to give us the final
-        // output
-        let out_inner: Float64Chunked;
+        // There are many ways to extract the x and y coordinates from ca.
+        // Here, we remain idiomatic and consistent with what we've been doing
+        // in the past - iterate, enumerate and map:
+        let out_inner: Float64Chunked = ca
+            .iter()
+            .enumerate()
+            .map(|(idx, opt_val)| {
 
-        // We match both elements of our &Float64Chunked (containing x and y),
-        // just to make sure both are Some(_), not *Some-thing* else
-        match (ca.get(0), ca.get(1)) {
-            (Some(_), Some(_)) => {
+                // We only use map here because opt_val is an Option
+                opt_val.map(|val| {
 
-                // When everything is ok, we'll do something very similar to
-                // something we've already done in the past: iterate, enumerate
-                // and map our `ca: &Float64Chunked`:
-                //
-                // Notice that we're storing the output in out_inner
-                out_inner = ca
-                    .into_no_null_iter()
-                    .enumerate()
-                    .map(|(idx, val)| {
-                        // Here's where the simple logic of calculating a
-                        // midpoint happens. We take the element (`val`) at
-                        // index `idx`, add it to the `idx-th` entry of our
-                        // reference point (which is a coordinate of our point),
-                        // then divide it by two, since we're dealing with 2d
-                        // points only. This could be generalized, more on that
-                        // later
-                        let midpoint = (val + ref_point[idx]) / 2.0f64;
+                    // Here's where the simple logic of calculating a
+                    // midpoint happens. We take the coordinate (`val`) at
+                    // index `idx`, add it to the `idx-th` entry of our
+                    // reference point (which is a coordinate of our point),
+                    // then divide it by two, since we're dealing with 2d
+                    // points only.
+                    (val + ref_point[idx]) / 2.0f64
+                })
+                // Our map already returns Some or None, so we don't have to
+                // worry about wrapping the result in, e.g., Some()
+            }).collect_trusted();
 
-                        // Finally, we return what the current element should be
-                        Some(midpoint)
-
-                    // Since not only this is a "controlled environment", but we
-                    // also checked both elements are Some(_), we're safe to use
-                    // collect_trusted()
-                    }).collect_trusted();
-            },
-            // In this scenario, (which should be unreachable in this example),
-            // we're simply cloning the input - if one of the elements is not
-            // Some(_), we don't know how to calculate a midpoint.
-            (_, _) => {
-                out_inner = ca.clone();
-            },
-        }
         // At last, we convert out_inner (which is a Float64Chunked) back to a
         // Series
-        out_inner.into_series()
-    })
-};
+        Ok(out_inner.into_series())
+    })};
 
 // And finally, we convert our ArrayChunked into a Series, ready to ship to
 // Python-land:
-Ok(out.into_series())
+Ok(out?.into_series())
 ```
 
 What does the result look like?

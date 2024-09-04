@@ -3,16 +3,7 @@
 
 We've talked about lists, structs, but what about arrays?
 
-![Sketch of an array](assets/array00.png)
-
-In this section we're gonna cover how to deal with __Polars__ arrays. Why is Polars in bold?
-That's because Polars follows the [Arrow protocol]()<LINK>, which has a column-oriented design:
-
-![Sketch of a table, highlighting the difference between row-oriented and column-oriented layouts](assets/array01.png)
-
-> "But these are tables, not arrays!" - You, probably
-
-True, but Polars supports arrays as a Series/column datatype. As in, fixed sized arrays, e.g., x and y coordinates of 2d points in the same column:
+In this section we're gonna cover how to deal with fixed sized arrays, e.g., x and y coordinates of 2d points *in the same column*:
 
 ```python
 points = pl.Series(
@@ -44,11 +35,7 @@ shape: (4, 1)
 └───────────────┘
 ```
 
-And like the table, the memory layout is column-oriented. That means when we deal with chunks, e.g., ArrayChunked, each dimension is contiguous in memory.
-
-Even though we'll be iterating rows in the example of this chapter, it is is very important to keep the memory layout in mind as a plugin developer.
-
-Now, let's get to work - what if we wanted to make a plugin that takes a Series like `points` above, and, likewise, returned a Series of 2d arrays?
+Let's get to work - what if we wanted to make a plugin that takes a Series like `points` above, and, likewise, returned a Series of 2d arrays?
 Turns out we _can_ do it! But it's a little bit tricky.
 
 Let's create a plugin that calculates the midpoint between a reference point and each point in a Series like the one above.

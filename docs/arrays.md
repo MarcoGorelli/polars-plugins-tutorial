@@ -44,7 +44,11 @@ shape: (4, 1)
 └───────────────┘
 ```
 
-What if we wanted to make a plugin that takes a Series like `points` above, and likewise, returned a Series of 2d arrays?
+And like the table, the memory layout is column-oriented. That means when we deal with chunks, e.g., ArrayChunked, each dimension is contiguous in memory.
+
+Even though we'll be iterating rows in the example of this chapter, it is is very important to keep the memory layout in mind as a plugin developer.
+
+Now, let's get to work - what if we wanted to make a plugin that takes a Series like `points` above, and, likewise, returned a Series of 2d arrays?
 Turns out we _can_ do it! But it's a little bit tricky.
 
 Let's create a plugin that calculates the midpoint between a reference point and each point in a Series like the one above.

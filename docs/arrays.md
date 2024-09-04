@@ -1,7 +1,18 @@
 
 # 11. Array, captain!
 
-We've talked about lists, structs, but what about arrays? As in, fixed sized arrays, e.g., x and y coordinates of 2d points:
+We've talked about lists, structs, but what about arrays?
+
+![Sketch of an array](assets/array00.png)
+
+In this section we're gonna cover how to deal with __Polars__ arrays. Why is Polars in bold?
+That's because Polars follows the [Arrow protocol]()<LINK>, which has a column-oriented design:
+
+![Sketch of a table, highlighting the difference between row-oriented and column-oriented layouts](assets/array01.png)
+
+> "But these are tables, not arrays!" - You, probably
+
+True, but Polars supports arrays as a Series/column datatype. As in, fixed sized arrays, e.g., x and y coordinates of 2d points in the same column:
 
 ```python
 points = pl.Series(
@@ -11,24 +22,6 @@ points = pl.Series(
         [7.19, 4.85],
         [2.1, 4.21],
         [3.4, 6.13],
-        [2.48, 9.26],
-        [9.41, 7.26],
-        [7.45, 8.85],
-        [6.58, 5.22],
-        [6.05, 5.77],
-        [8.57, 4.16],
-        [3.22, 4.98],
-        [6.62, 6.62],
-        [9.36, 7.44],
-        [8.34, 3.43],
-        [4.47, 7.61],
-        [4.34, 5.05],
-        [5.0, 5.05],
-        [5.0, 5.0],
-        [2.07, 7.8],
-        [9.45, 9.6],
-        [3.1, 3.26],
-        [4.37, 5.72],
     ],
     dtype=pl.Array(pl.Float64, 2),
 )
@@ -38,7 +31,7 @@ print(df)
 ```
 
 ```
-shape: (22, 1)
+shape: (4, 1)
 ┌───────────────┐
 │ points        │
 │ ---           │
@@ -48,13 +41,6 @@ shape: (22, 1)
 │ [7.19, 4.85]  │
 │ [2.1, 4.21]   │
 │ [3.4, 6.13]   │
-│ [2.48, 9.26]  │
-│ …             │
-│ [5.0, 5.0]    │
-│ [2.07, 7.8]   │
-│ [9.45, 9.6]   │
-│ [3.1, 3.26]   │
-│ [4.37, 5.72]  │
 └───────────────┘
 ```
 
@@ -126,13 +112,15 @@ fn midpoint_2d(inputs: &[Series], kwargs: MidPoint2DKwargs) -> PolarsResult<Seri
 }
 ```
 
-Uh-oh, unsafe, run to the hil- No, wait! It's true that we need unsafe here, but let's not freak out.
+Uh-oh, unsafe, we're doomed!
+
+Hold on a moment - it's true that we need unsafe here, but let's not freak out.
 If we read the docs of `try_apply_amortized_same_type`, we see the following:
 
 > ### Safety
 > Return series of F must has the same dtype and number of elements as input if it is Ok.
 
-In this example, we can uphold that contract - we know we're returning a Series with the same number of elements and same dtype as the input - take that, _unsafe_!
+In this example, we can uphold that contract - we know we're returning a Series with the same number of elements and same dtype as the input!
 
 Still, the code looks a bit scary, doesn't it? So let's break it down:
 
@@ -190,7 +178,7 @@ let out: Result<ArrayChunked, PolarsError> = unsafe {
 Ok(out?.into_series())
 ```
 
-What does the result look like?
+That's it. What does the result look like?
 In `run.py`, we have:
 
 ```python
@@ -263,3 +251,9 @@ shape: (22, 2)
 ```
 
 Hurray, we did it!
+
+!!!note
+    Notice how the dtype remains the same.
+    As an exercise, try to achieve the same in Python without explicitly casting the type of the Series.
+    Spoilers: it's not trivial
+

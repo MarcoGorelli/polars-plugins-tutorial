@@ -39,7 +39,7 @@ Let's get to work - what if we wanted to make a plugin that takes a Series like 
 Turns out we _can_ do it! But it's a little bit tricky.
 
 Let's create a plugin that calculates the midpoint between a reference point and each point in a Series like the one above.
-This should illustrate both how to unpack an array inside our rust code and also return a Series of the same type.
+This should illustrate both how to unpack an array inside our Rust code and also return a Series of the same type.
 
 We'll start by registering our plugin:
 
@@ -55,7 +55,7 @@ def midpoint_2d(expr: IntoExpr, ref_point: tuple[float, float]) -> pl.Expr:
 ```
 
 As you can see, we included an additional kwarg: `ref_point`, which we annotated with the type `tuple: [float, float]`.
-In our rust code, we won't receive it as a tuple, though, it'll also be an array.
+In our Rust code, we won't receive it as a tuple, though, it'll also be an array.
 This isn't crucial for this example, so just accept it for now.
 As you saw in the __arguments__ chapter, we take kwargs by defining a struct for them:
 
@@ -291,3 +291,6 @@ max: 6.99253460233255
 ```
 
 A speedup of __12x__, that's a __big win__!
+
+!!!note
+    To benchmark Rust code, remember to use `maturin develop --release`, otherwise the timings will be much slower!

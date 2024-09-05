@@ -1,5 +1,5 @@
 
-# 11. Array, captain!
+# 11. ARRAY, captain!
 
 We've talked about lists, structs, but what about arrays?
 

@@ -108,7 +108,6 @@ Uh-oh, unsafe, we're doomed!
 Hold on a moment - it's true that we need unsafe here, but let's not freak out.
 If we read the docs of `try_apply_amortized_same_type`, we see the following:
 
-> ### Safety
 > Return series of F must has the same dtype and number of elements as input if it is Ok.
 
 In this example, we can uphold that contract - we know we're returning a Series with the same number of elements and same dtype as the input!

@@ -38,7 +38,9 @@ shape: (4, 1)
 Let's get to work - what if we wanted to make a plugin that takes a Series like `points` above, and, likewise, returned a Series of 2d arrays?
 Turns out we _can_ do it! But it's a little bit tricky.
 
-Let's create a plugin that calculates the midpoint between a reference point and each point in a Series like the one above.
+__First of all__, we need to include `features = ["dtype-array"]` in both `pyo3-polars` and `polars-core` in our `Cargo.toml`.
+
+Now let's create a plugin that calculates the midpoint between a reference point and each point in a Series like the one above.
 This should illustrate both how to unpack an array inside our Rust code and also return a Series of the same type.
 
 We'll start by registering our plugin:

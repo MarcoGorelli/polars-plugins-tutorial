@@ -241,10 +241,54 @@ shape: (22, 2)
 └───────────────┴────────────────┘
 ```
 
-Hurray, we did it!
 
 !!!note
     Notice how the dtype remains the same.
     As an exercise, try to achieve the same in Python without explicitly casting the type of the Series.
-    Spoilers: it's not trivial
 
+Hurray, we did it!
+And why exactly go through all this trouble instead of just doing the same thing in pure Python?
+For performance of course!
+
+_Spoilers ahead if you haven't tried the exercise from the note above_
+
+With the following implementation in Python, we can take some measurements:
+
+```python
+ref_point = (5.0, 5.0)
+
+def using_plugin(df=df, ref_point=ref_point):
+    result = df.with_columns(midpoints=midpoint_2d("points", ref_point=ref_point))
+    return result
+
+def midpoint(points:pl.Series) -> pl.Series:
+    result=[]
+    for point in points:
+        result.append([(point[0]+ref_point[0])/2, (point[1]+ref_point[1])/2])
+    return pl.Series(result, dtype=pl.Array(pl.Float64, 2))
+
+def using_python(df=df, ref_point=ref_point):
+    result = (
+        df.with_columns(
+            midpoints=pl.col('points').map_batches(midpoint, return_dtype=pl.Array(pl.Float64, 2))
+        )
+    )
+    return result
+```
+
+For the sake of brevity, some extra methods to generate and parse an input file were left out of the code above, as  well as the `timeit` bits.
+By measuring both versions with 1.000.000 points a few times and taking the average, we got the following result:
+
+```
+Using plugin:
+min: 0.5307095803339811
+max: 0.5741689523274545
+0.5524565599986263 +/- 0.0064489015434971925
+
+Using python:
+min: 6.682447870339577
+max: 6.99253460233255
+6.808615755191394 +/- 0.03757884107880601
+```
+
+A speedup of __12x__, that's a __big win__!

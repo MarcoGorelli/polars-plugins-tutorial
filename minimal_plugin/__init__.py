@@ -166,3 +166,13 @@ def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
         function_name="life_step",
         is_elementwise=False,
     )
+
+
+def midpoint_2d(expr: IntoExpr, ref_point: tuple[float, float]) -> pl.Expr:
+    return register_plugin_function(
+        args=[expr],
+        plugin_path=LIB,
+        function_name="midpoint_2d",
+        is_elementwise=True,
+        kwargs={"ref_point": ref_point},
+    )

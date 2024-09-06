@@ -1,5 +1,5 @@
 
-# 12. `Vec<Option<T>>` vs. `Vec<T>`
+# 13. `Vec<Option<T>>` vs. `Vec<T>`
 
 > "I got, I got, I got, I got options" – _Pitbull_, before writing his first Polars plugin
 

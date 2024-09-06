@@ -1,5 +1,5 @@
-mod expressions;
 mod arrays;
+mod expressions;
 
 use pyo3_polars::PolarsAllocator;
 

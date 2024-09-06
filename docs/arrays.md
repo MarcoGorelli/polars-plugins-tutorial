@@ -35,7 +35,7 @@ shape: (4, 1)
 └───────────────┘
 ```
 
-Let's get to work - what if we wanted to make a plugin that takes a Series like `points` above, and, likewise, returned a Series of 2d arrays?
+Let's get to work - what if we wanted to make a plugin that takes a Series like `points` above, and, likewise, returned a Series of arrays?
 Turns out we _can_ do it! But it's a little bit tricky.
 
 __First of all__, we need to include `features = ["dtype-array"]` in both `pyo3-polars` and `polars-core` in our `Cargo.toml`.
@@ -86,7 +86,7 @@ fn midpoint_2d(inputs: &[Series], kwargs: MidPoint2DKwargs) -> PolarsResult<Seri
     let ca: &ArrayChunked = inputs[0].array()?;
     let ref_point = kwargs.ref_point;
 
-    let out: Result<ArrayChunked, PolarsError> = unsafe {
+    let out: ArrayChunked = unsafe {
         ca.try_apply_amortized_same_type(|row| {
             let s = row.as_ref();
             let ca = s.f64()?;
@@ -99,9 +99,9 @@ fn midpoint_2d(inputs: &[Series], kwargs: MidPoint2DKwargs) -> PolarsResult<Seri
                     })
                 }).collect_trusted();
             Ok(out_inner.into_series())
-        })};
+        })}?;
 
-    Ok(out?.into_series())
+    Ok(out.into_series())
 }
 ```
 
@@ -110,25 +110,29 @@ Uh-oh, unsafe, we're doomed!
 Hold on a moment - it's true that we need unsafe here, but let's not freak out.
 If we read the docs of `try_apply_amortized_same_type`, we see the following:
 
-> Return series of F must has the same dtype and number of elements as input if it is Ok.
+> ```rust
+> /// Try apply a closure `F` to each array.
+> ///
+> /// # Safety
+> /// Return series of `F` must has the same dtype and number of elements as input if it is Ok.
+> pub unsafe fn try_apply_amortized_same_type<F>(&self, mut f: F) -> PolarsResult<Self>
+> where
+>     F: FnMut(AmortSeries) -> PolarsResult<Series>,
+> ```
+
 
 In this example, we can uphold that contract - we know we're returning a Series with the same number of elements and same dtype as the input!
 
 Still, the code looks a bit scary, doesn't it? So let's break it down:
 
 ```rust
-let out: Result<ArrayChunked, PolarsError> = unsafe {
+let out: ArrayChunked = unsafe {
 
     // This is similar to apply_values, but it's amortized and made specifically
-    // for scenarios in which we know both the return type and length will be
-    // the same as the input. Since it's the try_* version of the function, it
-    // also possibly handles the `?` we use in the closure later
+    // for arrays.
     ca.try_apply_amortized_same_type(|row| {
-        // `row` is officially an AmortSeries. What does that mean? Shouldn't it
-        // be a 2d array with simple element access? Unfortunately not, but at
-        // least we're on the right track: it does indeed contain two elements
-
         let s = row.as_ref();
+        // `s` is a Series which contains two elements.
         // We unpack it similarly to the way we've been unpacking Series in the
         // previous chapters:
         //
@@ -163,11 +167,11 @@ let out: Result<ArrayChunked, PolarsError> = unsafe {
         // At last, we convert out_inner (which is a Float64Chunked) back to a
         // Series
         Ok(out_inner.into_series())
-    })};
+    })}?;
 
 // And finally, we convert our ArrayChunked into a Series, ready to ship to
 // Python-land:
-Ok(out?.into_series())
+Ok(out.into_series())
 ```
 
 That's it. What does the result look like?
@@ -175,8 +179,7 @@ In `run.py`, we have:
 
 ```python
 import polars as pl
-# Change mp for whatever you chose to name your plugin, e.g., minimal_plugin
-from mp import midpoint_2d
+from minimal_plugin import midpoint_2d
 
 points = pl.Series(
     "points",
@@ -245,7 +248,8 @@ shape: (22, 2)
 
 !!!note
     Notice how the dtype remains the same.
-    As an exercise, try to achieve the same in Python without explicitly casting the type of the Series.
+    As an exercise, try to achieve the same in pure-Python (without Rust plugins)
+    without explicitly casting the type of the Series.
 
 Hurray, we did it!
 And why exactly go through all this trouble instead of just doing the same thing in pure Python?
@@ -284,15 +288,15 @@ By measuring both versions with 1.000.000 points a few times and taking the aver
 Using plugin:
 min: 0.5307095803339811
 max: 0.5741689523274545
-0.5524565599986263 +/- 0.0064489015434971925
+mean +/- stderr: 0.5524565599986263 +/- 0.0064489015434971925
 
 Using python:
 min: 6.682447870339577
 max: 6.99253460233255
-6.808615755191394 +/- 0.03757884107880601
+mean +/- stderr: 6.808615755191394 +/- 0.03757884107880601
 ```
 
 A speedup of __12x__, that's a __big win__!
 
 !!!note
-    To benchmark Rust code, remember to use `maturin develop --release`, otherwise the timings will be much slower!
+    When benchmarking Rust code, remember to use `maturin develop --release`, otherwise the timings will be much slower!

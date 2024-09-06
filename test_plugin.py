@@ -196,3 +196,28 @@ def test_vertical_weighted_mean():
         {"group": ["b", "a"], "weighted_mean": [6.8, 1.7999999999999998]}
     )
     assert_frame_equal(result, expected)
+
+
+def test_midpoint_2d():
+    df = pl.DataFrame(
+        pl.Series(
+            "points",
+            [
+                [6.63, 8.35],
+                [7.19, 4.85],
+                [2.1, 4.21],
+                [3.4, 6.13],
+                [2.48, 9.26],
+            ],
+            dtype=pl.Array(pl.Float64, 2),
+        )
+    )
+    result = df.select(midpoints=mp.midpoint_2d("points", ref_point=(5.0, 5.0)))
+    expected = pl.DataFrame(
+        pl.Series(
+            "midpoints",
+            [[5.815, 6.675], [6.095, 4.925], [3.55, 4.605], [4.2, 5.565], [3.74, 7.13]],
+            dtype=pl.Array(pl.Float64, 2),
+        )
+    )
+    assert_frame_equal(result, expected)

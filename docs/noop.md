@@ -21,6 +21,7 @@ should look a bit like the following:
 │   └── lib.rs
 └── tests
 ```
+The cookiecutter command you ran earlier set up a Polars plugin project with a sample function called `pig_latinnify` already implemented. The [Polars Plugins Cookiecutter](https://github.com/MarcoGorelli/cookiecutter-polars-plugins) helps you quickly start a Polars plugin project, skipping the boilerplate setup. Check it out for more details!
 
   [Prerequisites]: ../prerequisites/
 
@@ -104,9 +105,9 @@ and return a (cheap!) clone of it.
 
 ## Putting it all together
 
-Right, does this all work? Let's make a Python file `run.py` with which to
-test it out. We'll just make a toy dataframe and apply `noop`
-to each column!
+Right, does this all work? Let's edit the Python file `run.py`, 
+which we will use for testing. We'll just make a toy dataframe 
+and apply `noop` to each column!
 ```python
 import polars as pl
 import minimal_plugin as mp

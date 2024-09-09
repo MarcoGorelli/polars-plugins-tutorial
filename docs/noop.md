@@ -13,12 +13,13 @@ should look a bit like the following:
 ├── Cargo.toml
 ├── minimal_plugin
 │   ├── __init__.py
-│   └── utils.py
+│   └── typing.py
 ├── pyproject.toml
-└── src
-    ├── expressions.rs
-    ├── lib.rs
-    └── utils.rs
+├── run.py
+├── src
+│   ├── expressions.rs
+│   └── lib.rs
+└── tests
 ```
 
   [Prerequisites]: ../prerequisites/
@@ -116,22 +117,6 @@ df = pl.DataFrame({
     'c': ['hello', 'everybody!', '!']
 })
 print(df.with_columns(mp.noop(pl.all()).name.suffix('_noop')))
-```
-
-Your working directory should now look a bit like this:
-
-```
-.
-├── Cargo.toml
-├── minimal_plugin
-│   ├── __init__.py
-│   └── utils.py
-├── pyproject.toml
-├── run.py
-└── src
-    ├── expressions.rs
-    ├── lib.rs
-    └── utils.rs
 ```
 
 Let's compile! Please run `maturin develop` (or `maturin develop --release` if benchmarking).

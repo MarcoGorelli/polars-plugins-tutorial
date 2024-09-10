@@ -17,10 +17,10 @@ following:
 
 ```python
 def add_suffix(expr: IntoExpr, *, suffix: str) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="add_suffix",
+        plugin_path=LIB,
+        function_name="add_suffix",
         is_elementwise=True,
         kwargs={"suffix": suffix},
     )

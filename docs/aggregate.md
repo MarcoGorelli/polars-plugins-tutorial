@@ -19,10 +19,10 @@ Nothing fancy here:
 
 ```python
 def vertical_weighted_mean(values: IntoExpr, weights: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[values, weights],
-        lib=lib,
-        symbol="vertical_weighted_mean",
+        plugin_path=LIB,
+        function_name="vertical_weighted_mean",
         is_elementwise=False,
         returns_scalar=True,
     )

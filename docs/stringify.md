@@ -50,10 +50,10 @@ in `minimal_plugin/__init__.py`):
 
 ```python
 def pig_latinnify(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="pig_latinnify",
+        plugin_path=LIB,
+        function_name="pig_latinnify",
         is_elementwise=True,
     )
 ```

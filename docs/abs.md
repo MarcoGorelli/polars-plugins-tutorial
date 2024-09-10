@@ -15,10 +15,10 @@ we did for `noop`, we'll just change the names. Please add this to
 `minimal_plugin/__init__.py`, right below the definition of `noop`:
 ```python
 def abs_i64(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="abs_i64",
+        plugin_path=LIB,
+        function_name="abs_i64",
         is_elementwise=True,
     )
 ```
@@ -90,10 +90,10 @@ First, add the following definition to `minimal_plugin/__init__.py`:
 
 ```python
 def abs_numeric(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="abs_numeric",
+        plugin_path=LIB,
+        function_name="abs_numeric",
         is_elementwise=True,
     )
 ```

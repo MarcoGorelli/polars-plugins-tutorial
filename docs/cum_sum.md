@@ -50,7 +50,6 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
             }
         })
         .collect_trusted();
-    let out: Int64Chunked = out.with_name(ca.name());
     Ok(out.into_series())
 }
 ```

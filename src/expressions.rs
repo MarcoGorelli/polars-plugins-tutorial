@@ -89,7 +89,6 @@ fn cum_sum(inputs: &[Series]) -> PolarsResult<Series> {
             None => Some(None),
         })
         .collect_trusted();
-    let out: Int64Chunked = out.with_name(ca.name());
     Ok(out.into_series())
 }
 
@@ -144,7 +143,7 @@ fn abs_i64_fast(inputs: &[Series]) -> PolarsResult<Series> {
             let arr: PrimitiveArray<i64> = slice.iter().copied().map(|x| x.abs()).collect_arr();
             arr.with_validity(validity.cloned())
         });
-    let out = Int64Chunked::from_chunk_iter(ca.name(), chunks);
+    let out = Int64Chunked::from_chunk_iter(PlSmallStr::EMPTY, chunks);
     Ok(out.into_series())
 }
 
@@ -193,7 +192,7 @@ where
                 (Some(lhs), Some(rhs)) => f(&lhs, &rhs),
                 _ => None,
             })
-            .collect_ca(lhs.name())
+            .collect_ca(PlSmallStr::EMPTY)
     }
 }
 
@@ -239,18 +238,17 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
 
 fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
-    match field.data_type() {
+    match field.dtype() {
         DataType::Struct(fields) => {
             let mut field_0 = fields[0].clone();
-            let name = field_0.name().clone();
             field_0.set_name(fields[fields.len() - 1].name().clone());
             let mut fields = fields[1..]
                 .iter()
                 .zip(fields[0..fields.len() - 1].iter())
-                .map(|(fld, name)| Field::new(name.name(), fld.data_type().clone()))
+                .map(|(fld, name)| Field::new(name.name().clone(), fld.dtype().clone()))
                 .collect::<Vec<_>>();
             fields.push(field_0);
-            Ok(Field::new(&name, DataType::Struct(fields)))
+            Ok(Field::new(PlSmallStr::EMPTY, DataType::Struct(fields)))
         },
         _ => unreachable!(),
     }
@@ -264,18 +262,18 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         return Ok(inputs[0].clone());
     }
     let mut field_0 = fields[0].clone();
-    field_0.rename(fields[fields.len() - 1].name());
+    field_0.rename(fields[fields.len() - 1].name().clone());
     let mut fields = fields[1..]
         .iter()
         .zip(fields[..fields.len() - 1].iter())
         .map(|(s, name)| {
             let mut s = s.clone();
-            s.rename(name.name());
+            s.rename(name.name().clone());
             s
         })
         .collect::<Vec<_>>();
     fields.push(field_0);
-    StructChunked::from_series(struct_.name(), &fields).map(|ca| ca.into_series())
+    StructChunked::from_series(PlSmallStr::EMPTY, &fields).map(|ca| ca.into_series())
 }
 
 use reverse_geocoder::ReverseGeocoder;
@@ -292,8 +290,8 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
-fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
-    let field = Field::new(input_fields[0].name(), DataType::List(Box::new(IDX_DTYPE)));
+fn list_idx_dtype(_input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = Field::new(PlSmallStr::EMPTY, DataType::List(Box::new(IDX_DTYPE)));
     Ok(field.clone())
 }
 
@@ -313,7 +311,7 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
             .enumerate()
             .filter(|(_idx, opt_val)| opt_val != &Some(0))
             .map(|(idx, _opt_val)| Some(idx as IdxSize))
-            .collect_ca("");
+            .collect_ca(PlSmallStr::EMPTY);
         out.into_series()
     });
     Ok(out.into_series())
@@ -332,7 +330,7 @@ fn vertical_weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         }
     });
     let result = numerator / denominator;
-    Ok(Series::new("", vec![result]))
+    Ok(Series::new(PlSmallStr::EMPTY, vec![result]))
 }
 
 fn linear_itp<T>(low: T, step: T, slope: T) -> T
@@ -417,9 +415,9 @@ where
             out.into(),
             Some(validity.into()),
         );
-        ChunkedArray::with_chunk(chunked_arr.name(), array)
+        ChunkedArray::with_chunk(PlSmallStr::EMPTY, array)
     } else {
-        ChunkedArray::from_vec(chunked_arr.name(), out)
+        ChunkedArray::from_vec(PlSmallStr::EMPTY, out)
     }
 }
 
@@ -427,8 +425,7 @@ where
 fn interpolate(inputs: &[Series]) -> PolarsResult<Series> {
     let s = &inputs[0];
     let ca = s.i64()?;
-    let mut out: Int64Chunked = interpolate_impl(ca, signed_interp::<i64>);
-    out.rename(ca.name());
+    let out: Int64Chunked = interpolate_impl(ca, signed_interp::<i64>);
     Ok(out.into_series())
 }
 
@@ -448,7 +445,7 @@ fn life_step(inputs: &[Series]) -> PolarsResult<Series> {
 
     let len = lf.len();
 
-    let mut out: Int64Chunked = mid
+    let out: Int64Chunked = mid
         .iter()
         .enumerate()
         .map(|(idx, val)| {
@@ -478,6 +475,5 @@ fn life_step(inputs: &[Series]) -> PolarsResult<Series> {
             })
         })
         .collect_trusted();
-    out.rename(ca_curr.name());
     Ok(out.into_series())
 }

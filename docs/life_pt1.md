@@ -267,7 +267,7 @@ fn life_step(inputs: &[Series]) -> PolarsResult<Series> {
 
     let len = lf.len();
 
-    let mut out: Int64Chunked = mid
+    let out: Int64Chunked = mid
         .iter()
         .enumerate()
         .map(|(idx, val)| {
@@ -297,7 +297,6 @@ fn life_step(inputs: &[Series]) -> PolarsResult<Series> {
             })
         })
         .collect_trusted();
-    out.rename(ca_curr.name());
     Ok(out.into_series())
 }
 ```

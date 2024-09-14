@@ -96,7 +96,7 @@ where
             out.into(),
             Some(validity.into()),
         );
-        ChunkedArray::with_chunk(chunked_arr.name(), array)
+        ChunkedArray::with_chunk(PlSmallStr::EMPTY, array)
     } else {
         ChunkedArray::from_vec(chunked_arr.name(), out)
     }
@@ -164,7 +164,7 @@ if first != 0 || last != chunked_arr.len() {
         out.into(),
         Some(validity.into()),
     );
-    ChunkedArray::with_chunk(chunked_arr.name(), array)
+    ChunkedArray::with_chunk(PlSmallStr::EMPTY, array)
 } else {
     ChunkedArray::from_vec(chunked_arr.name(), out)
 }

@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 pub fn point_2d_output(_: &[Field]) -> PolarsResult<Field> {
     Ok(Field::new(
-        "point_2d",
+        PlSmallStr::from_static("point_2d"),
         DataType::Array(Box::new(DataType::Float64), 2),
     ))
 }

@@ -46,7 +46,7 @@ fn vertical_weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
         }
     });
     let result = numerator / denominator;
-    Ok(Series::new("", vec![result]))
+    Ok(Series::new(PlSmallStr::EMPTY, vec![result]))
 }
 ```
 

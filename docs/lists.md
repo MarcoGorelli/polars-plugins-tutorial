@@ -72,7 +72,7 @@ where
                 (Some(lhs), Some(rhs)) => f(&lhs, &rhs),
                 _ => None,
             })
-            .collect_ca(lhs.name())
+            .collect_ca(PlSmallStr::EMPTY)
     }
 }
 ```

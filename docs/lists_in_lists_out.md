@@ -36,8 +36,8 @@ a function to each element of a List Series. In this case, we just want to find 
 elements, so we'll do:
 
 ```rust
-fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
-    let field = Field::new(input_fields[0].name(), DataType::List(Box::new(IDX_DTYPE)));
+fn list_idx_dtype(_input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = Field::new(PlSmallStr::EMPTY, DataType::List(Box::new(IDX_DTYPE)));
     Ok(field.clone())
 }
 
@@ -57,7 +57,7 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
             .enumerate()
             .filter(|(_idx, opt_val)| opt_val != &Some(0))
             .map(|(idx, _opt_val)| Some(idx as IdxSize))
-            .collect_ca("");
+            .collect_ca(PlSmallStr::EMPTY);
         out.into_series()
     });
     Ok(out.into_series())

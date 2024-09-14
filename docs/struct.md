@@ -37,6 +37,7 @@ fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     match field.dtype() {
         DataType::Struct(fields) => {
             let mut field_0 = fields[0].clone();
+            let name = field_0.name.clone();
             field_0.set_name(fields[fields.len() - 1].name().clone());
             let mut fields = fields[1..]
                 .iter()
@@ -44,7 +45,7 @@ fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
                 .map(|(fld, name)| Field::new(name.name().clone(), fld.dtype().clone()))
                 .collect::<Vec<_>>();
             fields.push(field_0);
-            Ok(Field::new(PlSmallStr::EMPTY, DataType::Struct(fields)))
+            Ok(Field::new(name, DataType::Struct(fields)))
         }
         _ => unreachable!(),
     }
@@ -67,7 +68,8 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         return Ok(inputs[0].clone());
     }
     let mut field_0 = fields[0].clone();
-    field_0.rename(fields[fields.len() - 1].name()).clone();
+    let name = field_0.name().clone();
+    field_0.rename(fields[fields.len() - 1].name().clone());
     let mut fields = fields[1..]
         .iter()
         .zip(fields[..fields.len() - 1].iter())
@@ -78,7 +80,7 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect::<Vec<_>>();
     fields.push(field_0);
-    StructChunked::from_series(PlSmallStr::EMPTY, &fields).map(|ca| ca.into_series())
+    StructChunked::from_series(name, &fields).map(|ca| ca.into_series())
 }
 ```
 

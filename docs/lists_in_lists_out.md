@@ -36,8 +36,8 @@ a function to each element of a List Series. In this case, we just want to find 
 elements, so we'll do:
 
 ```rust
-fn list_idx_dtype(_input_fields: &[Field]) -> PolarsResult<Field> {
-    let field = Field::new(PlSmallStr::EMPTY, DataType::List(Box::new(IDX_DTYPE)));
+fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = Field::new(input_fields[0].name.clone(), DataType::List(Box::new(IDX_DTYPE)));
     Ok(field.clone())
 }
 

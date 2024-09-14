@@ -13,13 +13,18 @@ should look a bit like the following:
 ├── Cargo.toml
 ├── minimal_plugin
 │   ├── __init__.py
-│   └── utils.py
+│   └── typing.py
 ├── pyproject.toml
-└── src
-    ├── expressions.rs
-    ├── lib.rs
-    └── utils.rs
+├── run.py
+├── src
+│   ├── expressions.rs
+│   └── lib.rs
+└── tests
 ```
+The cookiecutter command you ran earlier set up a Polars plugin project with a 
+sample function called `pig_latinnify` already implemented. The [Polars Plugins Cookiecutter](https://github.com/MarcoGorelli/cookiecutter-polars-plugins) 
+helps you quickly start a Polars plugin project, skipping the boilerplate setup. 
+Check it out for more details!
 
   [Prerequisites]: ../prerequisites/
 
@@ -31,22 +36,20 @@ Start by adding the following to `minimal_plugin/__init__.py`:
 
 ```python
 def noop(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="noop",
+        plugin_path=LIB,
+        function_name="noop",
         is_elementwise=True,
     )
 ```
 Let's go through this line-by-line:
 
 - when we compile Rust, it generates a Shared Object file.
-  The `lib` variable holds its filepath;
+  The `LIB` variable holds its filepath;
 - We'll cover `is_elementwise` in [Yes we SCAN], for now don't pay attention to it;
-- We use the utility function `register_plugin`, provided to us by the cookiecutter.
-  Polars actually has a public [register_plugin_function](https://docs.pola.rs/py-polars/html/reference/plugins.html#polars.plugins.register_plugin_function) utility for this, but it was only introduced in
-  Polars 0.20.16. The `register_plugin` function we introduce here handles backwards-compatibility
-  until Polars 0.20.6, so we use that in this tutorial.
+- We use the Polars utility function [register_plugin_function](https://docs.pola.rs/py-polars/html/reference/plugins.html#polars.plugins.register_plugin_function) to extend its functionality with our own.
+  
 
 Note that string literals are parsed as expressions, so that if somebody
 calls `noop('a')`, it gets interpreted as `noop(pl.col('a'))`.
@@ -103,9 +106,9 @@ and return a (cheap!) clone of it.
 
 ## Putting it all together
 
-Right, does this all work? Let's make a Python file `run.py` with which to
-test it out. We'll just make a toy dataframe and apply `noop`
-to each column!
+Right, does this all work? Let's edit the Python file `run.py`, 
+which we will use for testing. We'll just make a toy dataframe 
+and apply `noop` to each column!
 ```python
 import polars as pl
 import minimal_plugin as mp
@@ -116,22 +119,6 @@ df = pl.DataFrame({
     'c': ['hello', 'everybody!', '!']
 })
 print(df.with_columns(mp.noop(pl.all()).name.suffix('_noop')))
-```
-
-Your working directory should now look a bit like this:
-
-```
-.
-├── Cargo.toml
-├── minimal_plugin
-│   ├── __init__.py
-│   └── utils.py
-├── pyproject.toml
-├── run.py
-└── src
-    ├── expressions.rs
-    ├── lib.rs
-    └── utils.rs
 ```
 
 Let's compile! Please run `maturin develop` (or `maturin develop --release` if benchmarking).

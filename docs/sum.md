@@ -17,10 +17,10 @@ by using the `args` argument when we register our expression. Add the following 
 
 ```python
 def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr, other],
-        lib=lib,
-        symbol="sum_i64",
+        plugin_path=LIB,
+        function_name="sum_i64",
         is_elementwise=True,
     )
 ```

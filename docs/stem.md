@@ -36,10 +36,10 @@ On the Python side, let's add the following function to `minimal_plugin/__init__
 
 ```python
 def snowball_stem(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="snowball_stem",
+        plugin_path=LIB,
+        function_name="snowball_stem",
         is_elementwise=True,
     )
 ```

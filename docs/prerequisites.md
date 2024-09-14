@@ -45,7 +45,7 @@ Please navigate to it with `cd minimal_plugin`.
 
 Next, [create a Python3.8+ virtual environment](https://docs.python.org/3/library/venv.html), and install:
 
-- `polars>=0.20.0`
+- `polars>=1.3.0`
 - `maturin>=1.4.0`
 
 Finally, you'll also need to [install Rust](https://rustup.rs/).

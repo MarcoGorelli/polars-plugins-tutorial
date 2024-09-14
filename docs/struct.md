@@ -13,10 +13,10 @@ On the Python side, usual business:
 
 ```python
 def shift_struct(expr: IntoExpr) -> pl.Expr:
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        lib=lib,
-        symbol="shift_struct",
+        plugin_path=LIB,
+        function_name="shift_struct",
         is_elementwise=True,
     )
 ```

@@ -42,8 +42,7 @@ from typing import Iterable, Any
 
 import polars as pl
 from polars._typing import IntoExpr
-
-from game_of_life.utils import register_plugin
+from polars.plugins import register_plugin_function
 
 
 # Parse a board from a file or stdin
@@ -161,10 +160,10 @@ def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
     the same column names as the original data frame, so the resulting df will
     have the same shape. See how this is done in the `step(df, n)` function.
     """
-    return register_plugin(
+    return register_plugin_function(
         args=[left, mid, right],
-        lib=lib,
-        symbol="life_step",
+        plugin_path=LIB,
+        function_name="life_step",
         is_elementwise=False,
     )
 ```

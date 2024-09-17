@@ -113,7 +113,7 @@ First things first - this time we're gonna see somthing new. Polars does not all
 
 ```rust
 #[polars_expr(output_type=Struct)]
-fn print_fields(inputs: &[Series]) -> PolarsResult<Series> { ... }
+fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> { ... }
 ```
 
 The way we inform a struct Series is being returned is a bit cumbersome - we do so by defining a separate function:
@@ -135,7 +135,7 @@ Then using that function in our `polars_expr`, with a different "kwarg":
 
 ```rust
 #[polars_expr(output_type_func=struct_point_2d_output)]
-fn print_series(inputs: &[Series]) -> PolarsResult<Series> {
+fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> {
 
     let struct_ = inputs[0].struct_()?;
     let fields = struct_.fields_as_series();

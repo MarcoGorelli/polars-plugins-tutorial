@@ -25,7 +25,7 @@ Inside each chunk, Polars stores all the lists ("rows") as one single list, whil
 This is consistent with Apache Arrow's columnar format.
 It looks something like this:
 
-![foo](assets/list_chunked_memory_layout.png)
+![Diagram showing how Polars stores lists under the hood](assets/list_chunked_memory_layout.png)
 
 Back to where we were - we're going to try to count the indices which are non-zero. -->
 

@@ -159,7 +159,8 @@ fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> {
 ```
 
 This is a very basic, "do-nothing" example. For this reason, we're not gonna spend too much time here.
-Still, you're encouraged to register the plugin and try it for yourself.
+Still, you're encouraged to register the plugin and try it for yourself, as an exercise.
+
 Now, let's look at something more interesting.
 
 ---

@@ -98,7 +98,7 @@ This is consistent with how C, C++, and many other languages store structs in me
 How's our struct-in-a-DataFrame different?
 
 Polars follows the Arrow protocol for structs, which means each field of the struct is stored in a Series, backed by chunks. Each chunk is contiguous in memory.
-That makes it so, for instance, assuming a single chunk, the address after 64 bits from the start of the first x field holds the x value for the next struct instance, not the y field of the same instance.
+That makes it so, for instance, assuming a single chunk, the address after 64 bits from the start of the first x field holds the x value for the next row, not the y field of the same row.
 It's also important to mention the chunks composing the Series are stored on the heap. In a scenario in which we have a single chunk for each field, this is how things would look like:
 
 ![Diagram showing how Series backing struct fields are stored in memory](assets/structchunked_fields_memory_layout.png){ style="display: block; margin: 0 auto;" }

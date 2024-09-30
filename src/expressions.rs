@@ -242,7 +242,7 @@ fn struct_point_2d_output(input_fields: &[Field]) -> PolarsResult<Field> {
         DataType::Struct(fields) => {
             Ok(Field::new("struct_point_2d".into(), DataType::Struct(fields.clone())))
         }
-        _ => unreachable!(),
+        _ => polars_bail!(InvalidOperation:format!("unexpected dtype")),
     }
 }
 

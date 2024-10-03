@@ -15,7 +15,7 @@ We're going to implement `cum_sum`.
 
 Add this to `minimal_plugin/__init__.py`:
 ```python
-def cum_sum(expr: IntoExpr) -> pl.Expr:
+def cum_sum(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

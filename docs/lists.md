@@ -41,7 +41,7 @@ as you'll see here, it's not that hard to write a plugin, and it's probably fast
 On the Python side, this'll be similar to `sum_i64`:
 
 ```python
-def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
+def weighted_mean(expr: , weights: ) -> pl.Expr:
     return register_plugin_function(
         args=[expr, weights],
         plugin_path=LIB,

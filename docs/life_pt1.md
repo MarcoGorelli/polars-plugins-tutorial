@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Iterable, Any
 
 import polars as pl
-from polars._typing import IntoExpr
+from polars._typing import IntoExprColumn
 from polars.plugins import register_plugin_function
 
 
@@ -61,7 +61,7 @@ def _nwise_wrapping(iterable: Iterable[Any], n: int): ...
 def step(df: pl.DataFrame, n: int = 1): ...
 
 # Register our plugin
-def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr: ...
+def life_step(left: IntoExprColumn, mid: IntoExprColumn, right: IntoExprColumn) -> pl.Expr: ...
 ```
 
 Starting with the function to parse a board from a file or stdin:
@@ -153,7 +153,7 @@ Let's skip `_nwise_wrapping` and `step` for now and jump straight to the last fu
     Don't forget to read the comments!
 
 ```python
-def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
+def life_step(left: IntoExprColumn, mid: IntoExprColumn, right: IntoExprColumn) -> pl.Expr:
     """
     This is the function that registers the polars plugin. To use it directly,
     data must be in the correct format. An interesting way to do so is to use

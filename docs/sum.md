@@ -16,7 +16,7 @@ by using the `args` argument when we register our expression. Add the following 
 `minimal_plugins/__init__.py`:
 
 ```python
-def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
+def sum_i64(expr: IntoExprColumn, other: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr, other],
         plugin_path=LIB,

@@ -18,7 +18,7 @@ the weights are given by a second column.
 Nothing fancy here:
 
 ```python
-def vertical_weighted_mean(values: IntoExpr, weights: IntoExpr) -> pl.Expr:
+def vertical_weighted_mean(values: IntoExprColumn, weights: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[values, weights],
         plugin_path=LIB,

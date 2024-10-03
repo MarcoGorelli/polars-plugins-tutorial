@@ -10,5 +10,5 @@ if TYPE_CHECKING:
         from typing_extensions import TypeAlias
     from polars.datatypes import DataType, DataTypeClass
 
-    IntoExpr: TypeAlias = Union[pl.Expr, str, pl.Series]
+    IntoExprColumn: TypeAlias = Union[pl.Expr, str, pl.Series]
     PolarsDataType: TypeAlias = Union[DataType, DataTypeClass]

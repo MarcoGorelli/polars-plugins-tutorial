@@ -16,7 +16,7 @@ We'll do this with `kwargs`. In `minimal_plugin/__init__.py`, add the
 following:
 
 ```python
-def add_suffix(expr: IntoExpr, *, suffix: str) -> pl.Expr:
+def add_suffix(expr: IntoExprColumn, *, suffix: str) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

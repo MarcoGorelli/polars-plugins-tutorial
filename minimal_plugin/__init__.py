@@ -112,6 +112,13 @@ def weighted_mean(expr: IntoExprColumn, weights: IntoExprColumn) -> pl.Expr:
         is_elementwise=True,
     )
 
+def print_struct_fields(expr: IntoExprColumn) -> pl.Expr:
+    return register_plugin_function(
+        args=[expr],
+        plugin_path=LIB,
+        function_name="print_struct_fields",
+        is_elementwise=True,
+    )
 
 def shift_struct(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(

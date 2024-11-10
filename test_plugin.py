@@ -140,6 +140,27 @@ def test_non_zero_indices():
     assert_frame_equal(result, expected)
 
 
+def test_print_struct_fields():
+    df = pl.DataFrame(
+        {
+            "x": [1.0, 1.25, 1.5, 1.75],
+            "y": [3.0, 2.75, 2.5, 2.25],
+            "rgba": [0x00FF7FFF, 0xFF7F00FF, 0x7F7F7FFF, 0xD8D8D8FF],
+        }
+    ).select(
+        point_2d_s=pl.struct(
+            "x", "y", "rgba",
+            schema={
+                "x": pl.Float64,
+                "y": pl.Float64,
+                "rgba": pl.UInt32,
+            }
+        )
+    )
+    result = df.with_columns(point_2d_s=mp.print_struct_fields("point_2d_s"))
+    assert_frame_equal(result, df)
+
+
 def test_shift_struct():
     df = pl.DataFrame(
         {

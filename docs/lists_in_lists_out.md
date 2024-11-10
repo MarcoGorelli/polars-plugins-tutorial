@@ -3,7 +3,7 @@
 Chapter 9.0 ([Weighted-mean watchers]) was fun. Let's do it all over again!
 
 Or rather, let's do another list operation. We're going to start with
-a dataframe such as
+a dataframe such as:
 
 ```python
 shape: (4, 1)
@@ -18,7 +18,16 @@ shape: (4, 1)
 │ [3, 3]       │
 └──────────────┘
 ```
-and we're going to try to count the indices which are non-zero. -->
+
+Before we start, however, let's take a look into how Polars stores lists in memory.
+As we saw, lists are backed up by chunks.
+Inside each chunk, Polars stores all the lists ("rows") as one single list, while keeping track of where each row starts, and how many elements they have.
+This is consistent with Apache Arrow's columnar format.
+It looks something like this:
+
+![Diagram showing how Polars stores lists under the hood](assets/list_chunked_memory_layout.png)
+
+Back to where we were - we're going to try to count the indices which are non-zero. -->
 
 !!! note
 
@@ -30,6 +39,8 @@ and we're going to try to count the indices which are non-zero. -->
 
     But `eval` won't cover every need you ever have ever, so...it's good
     to learn how to do this as a plugin so you can then customize it according to your needs.
+
+---
 
 Polars has a helper function built-in for dealing with this: `apply_amortized`. We can use it to apply
 a function to each element of a List Series. In this case, we just want to find the indices of non-zero

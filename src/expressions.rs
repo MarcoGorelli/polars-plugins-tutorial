@@ -236,6 +236,39 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
+fn struct_point_2d_output(input_fields: &[Field]) -> PolarsResult<Field> {
+    let field = &input_fields[0];
+    match field.dtype() {
+        DataType::Struct(fields) => {
+            Ok(Field::new("struct_point_2d".into(), DataType::Struct(fields.clone())))
+        }
+        dtype => polars_bail!(InvalidOperation: "expected Struct dtype, got {}", dtype),
+    }
+}
+
+#[polars_expr(output_type_func=struct_point_2d_output)]
+fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> {
+
+    let struct_ = inputs[0].struct_()?;
+    let fields = struct_.fields_as_series();
+
+    if fields.is_empty() {
+        return Ok(inputs[0].clone());
+    }
+
+    let fields = fields
+        .iter()
+        .map(|s| {
+            let s = s.clone();
+            println!("{:?}", s);
+            s
+        })
+        .collect::<Vec<_>>();
+
+    StructChunked::from_series(struct_.name().clone(), &fields)
+        .map(|ca| ca.into_series())
+}
+
 fn shifted_struct(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
     match field.dtype() {

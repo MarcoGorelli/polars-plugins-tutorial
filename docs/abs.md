@@ -14,7 +14,7 @@ Let's start with the Python side - this is almost the same as what
 we did for `noop`, we'll just change the names. Please add this to
 `minimal_plugin/__init__.py`, right below the definition of `noop`:
 ```python
-def abs_i64(expr: IntoExpr) -> pl.Expr:
+def abs_i64(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -89,7 +89,7 @@ generalise it a bit, so that it can accept any signed numeric column.
 First, add the following definition to `minimal_plugin/__init__.py`:
 
 ```python
-def abs_numeric(expr: IntoExpr) -> pl.Expr:
+def abs_numeric(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

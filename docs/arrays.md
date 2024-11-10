@@ -46,7 +46,7 @@ This should illustrate both how to unpack an array inside our Rust code and also
 We'll start by registering our plugin:
 
 ```python
-def midpoint_2d(expr: IntoExpr, ref_point: tuple[float, float]) -> pl.Expr:
+def midpoint_2d(expr: IntoExprColumn, ref_point: tuple[float, float]) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=Path(__file__).parent,

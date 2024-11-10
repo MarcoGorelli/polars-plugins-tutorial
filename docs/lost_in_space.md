@@ -47,7 +47,7 @@ Unfortunately, not. But, this is a good chance to learn about a few new concepts
 We'll start easy by dealing with the Python side. Add the following to `minimal_plugin/__init__.py`:
 
 ```python
-def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
+def reverse_geocode(lat: IntoExprColumn, long: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[lat, long], plugin_path=LIB, function_name="reverse_geocode", is_elementwise=True
     )

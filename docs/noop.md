@@ -35,7 +35,7 @@ implement the Rust side too, but it's a necessary step.
 Start by adding the following to `minimal_plugin/__init__.py`:
 
 ```python
-def noop(expr: IntoExpr) -> pl.Expr:
+def noop(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

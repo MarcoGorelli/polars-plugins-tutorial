@@ -49,7 +49,7 @@ If you combine this with a Python definition (which you should put
 in `minimal_plugin/__init__.py`):
 
 ```python
-def pig_latinnify(expr: IntoExpr) -> pl.Expr:
+def pig_latinnify(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

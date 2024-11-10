@@ -171,7 +171,7 @@ the input was `{'a': 1, 'b': 2., 'c': '3'}`, then the output will be
 On the Python side, usual business:
 
 ```python
-def shift_struct(expr: IntoExpr) -> pl.Expr:
+def shift_struct(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

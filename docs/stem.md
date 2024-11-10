@@ -35,7 +35,7 @@ df.with_columns(stemmed_word=mp.snowball_stem('word'))
 On the Python side, let's add the following function to `minimal_plugin/__init__.py`:
 
 ```python
-def snowball_stem(expr: IntoExpr) -> pl.Expr:
+def snowball_stem(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

@@ -10,10 +10,10 @@ from polars.plugins import register_plugin_function
 LIB = Path(__file__).parent
 
 if TYPE_CHECKING:
-    from minimal_plugin.typing import IntoExpr
+    from minimal_plugin.typing import IntoExprColumn
 
 
-def noop(expr: IntoExpr) -> pl.Expr:
+def noop(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -22,7 +22,7 @@ def noop(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def abs_i64(expr: IntoExpr) -> pl.Expr:
+def abs_i64(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -31,7 +31,7 @@ def abs_i64(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def abs_numeric(expr: IntoExpr) -> pl.Expr:
+def abs_numeric(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -40,7 +40,7 @@ def abs_numeric(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
+def sum_i64(expr: IntoExprColumn, other: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr, other],
         plugin_path=LIB,
@@ -49,7 +49,7 @@ def sum_i64(expr: IntoExpr, other: IntoExpr) -> pl.Expr:
     )
 
 
-def cum_sum(expr: IntoExpr) -> pl.Expr:
+def cum_sum(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -58,7 +58,7 @@ def cum_sum(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def pig_latinnify(expr: IntoExpr) -> pl.Expr:
+def pig_latinnify(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -67,7 +67,7 @@ def pig_latinnify(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def remove_extension(expr: IntoExpr) -> pl.Expr:
+def remove_extension(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -76,7 +76,7 @@ def remove_extension(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def abs_i64_fast(expr: IntoExpr) -> pl.Expr:
+def abs_i64_fast(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -85,7 +85,7 @@ def abs_i64_fast(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def add_suffix(expr: IntoExpr, *, suffix: str) -> pl.Expr:
+def add_suffix(expr: IntoExprColumn, *, suffix: str) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -95,7 +95,7 @@ def add_suffix(expr: IntoExpr, *, suffix: str) -> pl.Expr:
     )
 
 
-def snowball_stem(expr: IntoExpr) -> pl.Expr:
+def snowball_stem(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -104,7 +104,7 @@ def snowball_stem(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def weighted_mean(expr: IntoExpr, weights: IntoExpr) -> pl.Expr:
+def weighted_mean(expr: IntoExprColumn, weights: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr, weights],
         plugin_path=LIB,
@@ -120,7 +120,7 @@ def print_struct_fields(expr: IntoExpr) -> pl.Expr:
         is_elementwise=True,
     )
 
-def shift_struct(expr: IntoExpr) -> pl.Expr:
+def shift_struct(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -129,7 +129,7 @@ def shift_struct(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
+def reverse_geocode(lat: IntoExprColumn, long: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[lat, long],
         plugin_path=LIB,
@@ -138,7 +138,7 @@ def reverse_geocode(lat: IntoExpr, long: IntoExpr) -> pl.Expr:
     )
 
 
-def non_zero_indices(expr: IntoExpr) -> pl.Expr:
+def non_zero_indices(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -147,7 +147,7 @@ def non_zero_indices(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def vertical_weighted_mean(values: IntoExpr, weights: IntoExpr) -> pl.Expr:
+def vertical_weighted_mean(values: IntoExprColumn, weights: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[values, weights],
         plugin_path=LIB,
@@ -157,7 +157,7 @@ def vertical_weighted_mean(values: IntoExpr, weights: IntoExpr) -> pl.Expr:
     )
 
 
-def interpolate(expr: IntoExpr) -> pl.Expr:
+def interpolate(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
@@ -166,7 +166,7 @@ def interpolate(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
+def life_step(left: IntoExprColumn, mid: IntoExprColumn, right: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[left, mid, right],
         plugin_path=LIB,
@@ -175,7 +175,7 @@ def life_step(left: IntoExpr, mid: IntoExpr, right: IntoExpr) -> pl.Expr:
     )
 
 
-def midpoint_2d(expr: IntoExpr, ref_point: tuple[float, float]) -> pl.Expr:
+def midpoint_2d(expr: IntoExprColumn, ref_point: tuple[float, float]) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,

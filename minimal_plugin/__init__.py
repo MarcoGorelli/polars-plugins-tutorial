@@ -112,6 +112,7 @@ def weighted_mean(expr: IntoExprColumn, weights: IntoExprColumn) -> pl.Expr:
         is_elementwise=True,
     )
 
+
 def print_struct_fields(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
         args=[expr],
@@ -119,6 +120,7 @@ def print_struct_fields(expr: IntoExprColumn) -> pl.Expr:
         function_name="print_struct_fields",
         is_elementwise=True,
     )
+
 
 def shift_struct(expr: IntoExprColumn) -> pl.Expr:
     return register_plugin_function(
@@ -166,7 +168,9 @@ def interpolate(expr: IntoExprColumn) -> pl.Expr:
     )
 
 
-def life_step(left: IntoExprColumn, mid: IntoExprColumn, right: IntoExprColumn) -> pl.Expr:
+def life_step(
+    left: IntoExprColumn, mid: IntoExprColumn, right: IntoExprColumn
+) -> pl.Expr:
     return register_plugin_function(
         args=[left, mid, right],
         plugin_path=LIB,

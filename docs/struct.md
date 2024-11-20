@@ -7,8 +7,8 @@
 For this chapter, we need to start by activating the necessary feature - in `Cargo.toml`, please make this change:
 
 ```diff
--polars = { version = "0.43.1", default-features = false }
-+polars = { version = "0.43.1", features=["dtype-struct"], default-features = false }
+-polars = { version = "0.44.2", default-features = false }
++polars = { version = "0.44.2", features=["dtype-struct"], default-features = false }
 ```
 
 ---

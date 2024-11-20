@@ -151,7 +151,7 @@ fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect::<Vec<_>>();
 
-    StructChunked::from_series(struct_.name().clone(), &fields)
+    StructChunked::from_series(struct_.name().clone(), struct_.len(), fields.iter())
         .map(|ca| ca.into_series())
 }
 ```
@@ -231,7 +231,7 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect::<Vec<_>>();
     fields.push(field_0);
-    StructChunked::from_series(name, &fields).map(|ca| ca.into_series())
+    StructChunked::from_series(name, struct_.len(), fields.iter()).map(|ca| ca.into_series())
 }
 ```
 

@@ -239,16 +239,16 @@ fn weighted_mean(inputs: &[Series]) -> PolarsResult<Series> {
 fn struct_point_2d_output(input_fields: &[Field]) -> PolarsResult<Field> {
     let field = &input_fields[0];
     match field.dtype() {
-        DataType::Struct(fields) => {
-            Ok(Field::new("struct_point_2d".into(), DataType::Struct(fields.clone())))
-        }
+        DataType::Struct(fields) => Ok(Field::new(
+            "struct_point_2d".into(),
+            DataType::Struct(fields.clone()),
+        )),
         dtype => polars_bail!(InvalidOperation: "expected Struct dtype, got {}", dtype),
     }
 }
 
 #[polars_expr(output_type_func=struct_point_2d_output)]
 fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> {
-
     let struct_ = inputs[0].struct_()?;
     let fields = struct_.fields_as_series();
 
@@ -265,7 +265,7 @@ fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect::<Vec<_>>();
 
-    StructChunked::from_series(struct_.name().clone(), &fields)
+    StructChunked::from_series(struct_.name().clone(), struct_.len(), fields.iter())
         .map(|ca| ca.into_series())
 }
 
@@ -308,7 +308,7 @@ fn shift_struct(inputs: &[Series]) -> PolarsResult<Series> {
         })
         .collect::<Vec<_>>();
     fields.push(field_0);
-    StructChunked::from_series(name, &fields).map(|ca| ca.into_series())
+    StructChunked::from_series(name, struct_.len(), fields.iter()).map(|ca| ca.into_series())
 }
 
 use reverse_geocoder::ReverseGeocoder;
@@ -326,7 +326,10 @@ fn reverse_geocode(inputs: &[Series]) -> PolarsResult<Series> {
 }
 
 fn list_idx_dtype(input_fields: &[Field]) -> PolarsResult<Field> {
-    let field = Field::new(input_fields[0].name.clone(), DataType::List(Box::new(IDX_DTYPE)));
+    let field = Field::new(
+        input_fields[0].name.clone(),
+        DataType::List(Box::new(IDX_DTYPE)),
+    );
     Ok(field.clone())
 }
 

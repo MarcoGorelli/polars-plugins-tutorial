@@ -149,12 +149,14 @@ def test_print_struct_fields():
         }
     ).select(
         point_2d_s=pl.struct(
-            "x", "y", "rgba",
+            "x",
+            "y",
+            "rgba",
             schema={
                 "x": pl.Float64,
                 "y": pl.Float64,
                 "rgba": pl.UInt32,
-            }
+            },
         )
     )
     result = df.with_columns(point_2d_s=mp.print_struct_fields("point_2d_s"))

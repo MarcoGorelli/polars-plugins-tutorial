@@ -24,4 +24,10 @@ Finally, if you make a commit and tag it, and then push, then a release should b
 available for install across different platforms, which would be really hard (impossible?) to do if you were building
 the wheel manually and uploading to PyPI yourself.
 
+## PYPI_API_TOKEN
+
+You'll also need a repository secret called `PYPI_API_TOKEN`. In PyPI,
+create an API token scoped just to your project, and then save it in your
+repository's secrets using the name `PYPI_API_TOKEN`.
+
   [Prerequisites]: ../prerequisites/

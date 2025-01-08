@@ -12,13 +12,13 @@ name = "minimal_plugin"
 crate-type= ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.21.2", features = ["extension-module", "abi3-py38"] }
-pyo3-polars = { version = "0.18.0", features = ["derive", "dtype-struct", "dtype-decimal", "dtype-array"] }
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py38"] }
+pyo3-polars = { version = "0.19", features = ["derive", "dtype-struct", "dtype-decimal", "dtype-array"] }
 serde = { version = "1", features = ["derive"] }
-polars = { version = "0.44.2", features = ["dtype-struct"], default-features = false }
-polars-arrow = { version = "0.44.2", default-features = false }
-polars-core = { version = "0.44.2", features = ["dtype-array"], default-features = false }
-polars-sql = { version = "0.44.2", default-features = false }
+polars = { version = "0.45", features = ["dtype-struct"], default-features = false }
+polars-arrow = { version = "0.45", default-features = false }
+polars-core = { version = "0.45", features = ["dtype-array"], default-features = false }
+polars-sql = { version = "0.45", default-features = false }
 reverse_geocoder = "4.1.1"
 # rust-stemmers = "1.2.0"
 

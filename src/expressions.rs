@@ -1,7 +1,7 @@
 #![allow(clippy::unused_unit)]
 use std::ops::{Add, Div, Mul, Sub};
 
-use polars::export::num::{NumCast, Zero};
+use num_traits::{NumCast, Zero, Signed};
 use polars::prelude::arity::{
     binary_elementwise_into_string_amortized, broadcast_binary_elementwise,
 };
@@ -10,7 +10,6 @@ use polars_arrow::bitmap::MutableBitmap;
 use polars_core::series::amortized_iter::AmortSeries;
 use polars_core::utils::align_chunks_binary;
 use pyo3_polars::derive::polars_expr;
-use pyo3_polars::export::polars_core::export::num::Signed;
 use pyo3_polars::export::polars_core::utils::arrow::array::PrimitiveArray;
 use pyo3_polars::export::polars_core::utils::CustomIterTools;
 use serde::Deserialize;

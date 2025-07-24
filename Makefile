@@ -10,7 +10,8 @@ install-release:
 	source .venv/bin/activate && maturin develop --release -m Cargo.toml
 
 pre-commit:
-	cargo +nightly fmt --all --manifest-path Cargo.toml && cargo clippy --all-features --manifest-path Cargo.toml
+	rustup component add rustfmt clippy --toolchain nightly-2025-05-21
+	cargo fmt --all --manifest-path Cargo.toml && cargo clippy --all-features --manifest-path Cargo.toml
 	.venv/bin/python -m ruff format minimal_plugin test_plugin.py
 	.venv/bin/python -m ruff check minimal_plugin test_plugin.py
 

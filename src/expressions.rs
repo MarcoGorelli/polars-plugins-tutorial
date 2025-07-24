@@ -1,7 +1,7 @@
 #![allow(clippy::unused_unit)]
 use std::ops::{Add, Div, Mul, Sub};
 
-use num_traits::{NumCast, Zero, Signed};
+use num_traits::{NumCast, Signed, Zero};
 use polars::prelude::arity::{
     binary_elementwise_into_string_amortized, broadcast_binary_elementwise,
 };
@@ -259,7 +259,7 @@ fn print_struct_fields(inputs: &[Series]) -> PolarsResult<Series> {
         .iter()
         .map(|s| {
             let s = s.clone();
-            println!("{:?}", s);
+            println!("{s:?}");
             s
         })
         .collect::<Vec<_>>();
@@ -448,7 +448,7 @@ where
         }
 
         let array = PrimitiveArray::new(
-            T::get_dtype().to_arrow(CompatLevel::newest()),
+            T::get_static_dtype().to_arrow(CompatLevel::newest()),
             out.into(),
             Some(validity.into()),
         );

@@ -139,8 +139,12 @@ where
 }
 ```
 Make sure to add
+```toml
+num-traits = "0.2.19"
+```
+as a dependency in `Cargo.toml` and
 ```Rust
-use pyo3_polars::export::polars_core::export::num::Signed;
+use num_traits::Signed;
 ```
 to the top of the `src/expression.rs` file.
 

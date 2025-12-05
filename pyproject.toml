@@ -4,11 +4,14 @@ build-backend = "maturin"
 
 [project]
 name = "minimal_plugin"  # Should match the folder with your code!
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
   "Programming Language :: Rust",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+
+[tool.maturin]
+module-name = "minimal_plugin._internal"
 

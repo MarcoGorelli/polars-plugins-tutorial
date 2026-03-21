@@ -42,7 +42,7 @@ Back to where we were - we're going to try to count the indices which are non-ze
 
 ---
 
-Polars has a helper function built-in for dealing with this: `apply_amortized`. We can use it to apply
+Polars has a helper function built-in for dealing with this: `try_apply_amortized`. We can use it to apply
 a function to each element of a List Series. In this case, we just want to find the indices of non-zero
 elements, so we'll do:
 
@@ -60,7 +60,7 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
         ComputeError: "Expected `List(Int64)`, got: {}", ca.dtype()
     );
 
-    let out: ListChunked = ca.apply_amortized(|s| {
+    let out: ListChunked = ca.try_apply_amortized(|s| {
         let s: &Series = s.as_ref();
         let ca: &Int64Chunked = s.i64().unwrap();
         let out: IdxCa = ca
@@ -69,12 +69,12 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
             .filter(|(_idx, opt_val)| opt_val != &Some(0))
             .map(|(idx, _opt_val)| Some(idx as IdxSize))
             .collect_ca(PlSmallStr::EMPTY);
-        out.into_series()
-    });
+        Ok(out.into_series())
+    })?;
     Ok(out.into_series())
 }
 ```
-`apply_amortized` is a bit like the `apply_into_string_amortized` function we used in [How to STRING something together],
+`try_apply_amortized` is a bit like the `apply_into_string_amortized` function we used in [How to STRING something together],
 in that it makes a big allocation upfront to amortize the allocation costs. Think of it as a list version
 of `apply_values`, where each element is itself a `Series`.
 

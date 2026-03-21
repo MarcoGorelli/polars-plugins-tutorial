@@ -340,7 +340,7 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
         ComputeError: "Expected `List(Int64)`, got: {}", ca.dtype()
     );
 
-    let out: ListChunked = ca.apply_amortized(|s| {
+    let out: ListChunked = ca.try_apply_amortized(|s| {
         let s: &Series = s.as_ref();
         let ca: &Int64Chunked = s.i64().unwrap();
         let out: IdxCa = ca
@@ -349,8 +349,8 @@ fn non_zero_indices(inputs: &[Series]) -> PolarsResult<Series> {
             .filter(|(_idx, opt_val)| opt_val != &Some(0))
             .map(|(idx, _opt_val)| Some(idx as IdxSize))
             .collect_ca(PlSmallStr::EMPTY);
-        out.into_series()
-    });
+        Ok(out.into_series())
+    })?;
     Ok(out.into_series())
 }
 
